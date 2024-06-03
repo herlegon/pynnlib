@@ -1,0 +1,28 @@
+{
+    "files.exclude": {
+        "**/__pycache__": true,
+        "**/*.bin": true,
+        "**/*.engine": true,
+        "**/*.onnx": true,
+        "**/*.pt": true,
+        "**/*.pth": true,
+        "**/*.mkv": true,
+        "**/*.mp4": true,
+        "**/*.png": true,
+    },
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": false,
+    "files.trimTrailingWhitespace": true,
+    "[python]": {
+        "editor.rulers": [
+            90,
+            120
+        ]
+    },
+    "git.detectSubmodules": true,
+    "cSpell.words": [
+        "ndarray",
+        "pageable",
+        "tensorrt"
+    ],
+}
