@@ -167,8 +167,15 @@ class ConvTransBlock(nn.Module):
 
 class SCUNet(nn.Module):
 
-    def __init__(self, in_nc=3, config=[4] * 7, dim=64, drop_path_rate=0.0, input_resolution=256):
-        super(SCUNet, self).__init__()
+    def __init__(
+        self,
+        in_nc=3,
+        config=[4] * 7,
+        dim=64,
+        drop_path_rate=0.0,
+        input_resolution=256
+    ):
+        super().__init__()
         self.config = config
         self.dim = dim
         self.head_dim = 32
@@ -227,20 +234,17 @@ class SCUNet(nn.Module):
         # self.apply(self._init_weights)
 
 
-
-
     @staticmethod
     def add_padding(x: torch.Tensor) -> torch.Tensor:
         _, _, h, w = x.size()
         mod_pad_h = (64 - h % 64) % 64
         mod_pad_w = (64 - w % 64) % 64
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+        if mod_pad_h or mod_pad_w:
+            x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
         return x
 
 
-    def forward(self, x0:torch.Tensor) -> torch.Tensor:
-        # Assume the tensor is clamped before
-        # AND the caller will clamp it after the inference
+    def forward(self, x0: torch.Tensor) -> torch.Tensor:
         h, w = x0.size()[-2:]
         x0 = self.add_padding(x0)
 

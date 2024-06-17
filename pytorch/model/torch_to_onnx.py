@@ -17,6 +17,7 @@ def to_onnx(
     model: PytorchModel,
     fp16: bool,
     opset: int,
+    static: bool = False,
     device: str = 'cpu',
     batch: int = 1,
 ) -> onnx.ModelProto | None:
@@ -41,10 +42,16 @@ def to_onnx(
     session.initialize(device=device, fp16=fp16)
 
     # https://github.com/onnx/onnx/issues/654
-    dynamic_axes = {
-        'input': {0: "batch", 2: "height", 3: "width"},
-        'output': {0: "batch", 2: "height", 3: "width"},
-    }
+    if batch == 1:
+        dynamic_axes = {
+            'input': {2: "height", 3: "width"},
+            'output': {2: "height", 3: "width"},
+        }
+    else:
+        dynamic_axes = {
+            'input': {0: "batch", 2: "height", 3: "width"},
+            'output': {0: "batch", 2: "height", 3: "width"},
+        }
 
     size: SizeConstraint | None = model.size_constraint
     w, h = size.min if size is not None and size.min is not None else (32, 32)
@@ -70,7 +77,7 @@ def to_onnx(
             output_names=['output'],
             opset_version=opset,
             do_constant_folding=True,
-            dynamic_axes=dynamic_axes,
+            dynamic_axes=dynamic_axes if not static else None,
         )
         bytes_io.seek(0)
         model_proto = onnx.load(bytes_io)

@@ -1,6 +1,5 @@
 from __future__ import annotations
 import onnx
-from .optimizer import optimize_model
 from pynnlib.import_libs import is_tensorrt_available
 from pynnlib.model import OnnxModel
 if is_tensorrt_available():
@@ -19,12 +18,6 @@ def to_tensorrt(
     bf16: bool,
     shape_strategy: ShapeStrategy,
 ) -> TensorrtModel:
-    if False:
-        print("optimizing onnx model")
-        onnx_model: onnx.ModelProto = optimize_model(model.model_proto)
-        print("optimized")
-    else:
-        onnx_model = model.model_proto
 
     return onnx_to_trt_engine(
         model,

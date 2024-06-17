@@ -48,8 +48,18 @@ from pynnlib import (
 model: NnModel = nnlib.open(model_filepath)
 ```
 
+## Parse models
+example:
+`python -m scripts.parse_models -d ~/ml_models --filter pytorch`
 
-## Convert a model to a TensorRT model
+
+## Single image inference
+example:
+`python -m pynnlib.scripts.img_infer --img ~/imgs/img.png --model ~/ml_models/2x-LD-Anime-Compact.pth --cuda`
+
+
+
+## Dev: convert a model to a TensorRT model
 ...and save the engine
 
 ```python
@@ -72,7 +82,7 @@ trt_model: TrtModel = nnlib.convert_to_tensorrt(
 )
 ```
 
-## Perform an inference
+## Dev: erform an inference
 with a default inference session.<br/>
 PyTorch to transfer an image (bgr, np.float32) to the execution provider (device) using pageable memory.
 

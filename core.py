@@ -219,6 +219,7 @@ class NnLib:
         opset: int = 17,
         fp16: bool = True,
         bf16: bool = False,
+        static: bool = False,
         device: str = 'cpu',
         out_dir: str | Path | None = None,
         suffix: str | None = None,
@@ -250,6 +251,7 @@ class NnLib:
             onnx_model_object: onnx.ModelProto = convert_fct(
                 model=model,
                 fp16=fp16,
+                static=static,
                 opset=opset,
                 device=device,
             )
@@ -334,7 +336,7 @@ class NnLib:
         basename = os_path_basename(model.filepath)
         if model.fwk_type == NnFrameworkType.ONNX:
             opset = model.opset
-            basename = re.sub("_op\d{1,2}", '', basename)
+            basename = re.sub(r"_op\d{1,2}", '', basename)
             for dt in ('_fp32', '_fp16', '_bf16'):
                 basename = basename.replace(dt, '')
 
@@ -368,6 +370,7 @@ class NnLib:
             model=model,
             opset=opset,
             fp16=fp16,
+            static=shape_strategy.static,
             device=device,
             out_dir=out_dir,
         )

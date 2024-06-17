@@ -3,6 +3,7 @@ import re
 from pynnlib.utils.p_print import *
 from pynnlib.architecture import NnPytorchArchitecture
 from pynnlib.model import PytorchModel
+from ..torch_to_onnx import to_onnx
 from .module.SwinIR import SwinIR
 
 
@@ -158,6 +159,7 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
             "layers.0.residual_group.blocks.0.attn.relative_position_index",
         ),
         parse=parse,
-        dtypes=('fp32', 'fp16'),
+        to_onnx=to_onnx,
+        dtypes=('fp32'),
     ),
 )

@@ -12,7 +12,6 @@ from pynnlib.utils.torch_tensor import (
     to_nchw,
     to_hwc,
 )
-# from ..model.optimizer import optimize_model
 
 
 class OnnxSession:

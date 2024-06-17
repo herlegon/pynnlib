@@ -1,5 +1,7 @@
 from .logger import nnlogger
 from .import_libs import *
+if not is_cuda_available():
+    raise SystemError("Error: torch and torchvision must be installed")
 
 from .core import nn_lib as nnlib
 

@@ -1,4 +1,5 @@
 import numpy as np
+from pynnlib.logger import nnlogger
 from pynnlib.session import set_cuda_device
 from pynnlib.utils.p_print import *
 import tensorrt as trt
@@ -54,7 +55,7 @@ def _onnx_to_trt_engine(
             raise ValueError("Missing input tensor in model")
         input_name = input_tensor.name
         is_fp16 = True if trt.nptype(input_tensor.dtype) == np.float16 else fp16
-        print(f"is_fp16: {is_fp16}, to_fp16: {fp16}")
+        nnlogger.debug(f"is_fp16: {is_fp16}, to_fp16: {fp16}")
         # builder.max_batch_size = 1
 
         # Create a build configuration specifying how TensorRT should optimize the model
@@ -92,28 +93,20 @@ def _onnx_to_trt_engine(
                 raise RuntimeError("Error: fp16 is requested but this platform does not support it")
 
         # TODO create a list of profiles for each input
-        profile = builder.create_optimization_profile()
-        batch_opt = 1
         if not shape_strategy.static:
+            profile = builder.create_optimization_profile()
+            batch_opt = 1
             profile.set_shape(
                 input=input_name,
                 min=(batch_opt, model.in_nc, *reversed(shape_strategy.min_size)),
                 opt=(batch_opt, model.in_nc, *reversed(shape_strategy.opt_size)),
                 max=(batch_opt, model.in_nc, *reversed(shape_strategy.max_size)),
             )
-        builder_config.add_optimization_profile(profile)
+            builder_config.add_optimization_profile(profile)
 
-        # profile_batch_min = builder.create_optimization_profile()
-        # if not shape_strategy.static:
-        #     profile.set_shape(
-        #         input=input_name,
-        #         min=(batch_min, model.in_nc, *reversed(shape_strategy.min_shape)),
-        #         opt=(batch_min, model.in_nc, *reversed(shape_strategy.opt_shape)),
-        #         max=(batch_min, model.in_nc, *reversed(shape_strategy.max_shape)),
-        #     )
-        # builder_config.add_optimization_profile(profile_batch_min)
 
-        print("[I] Building a TensortRT engine; this may take a while...")
+
+        nnlogger.info("[I] Building a TensortRT engine; this may take a while...")
         # serialized_engine = builder.build_serialized_network(network, config)
         engine_bytes = builder.build_serialized_network(network, builder_config)
         if engine_bytes is None:

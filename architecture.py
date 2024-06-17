@@ -83,6 +83,8 @@ class NnPytorchArchitecture(NnGenericArchitecture):
     """Convert a model from pytorch to onnx"""
     to_onnx: ConvertToOnnxFct | None = None
     to_tensorrt: ConvertToTensorrtFct | None = None
+    # TODO add dtypes supported for conversion to tensorRT
+    #   example: SCUNET does not support conversion to fp16
 
 
 @dataclass

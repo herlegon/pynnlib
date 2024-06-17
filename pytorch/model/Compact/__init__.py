@@ -1,4 +1,3 @@
-from pynnlib.utils.p_print import *
 from pynnlib.architecture import NnPytorchArchitecture, SizeConstraint
 from pynnlib.model import PytorchModel
 from ..helpers import (
@@ -27,7 +26,6 @@ def parse(model: PytorchModel) -> None:
         num_feat=num_feat,
         num_conv=num_conv,
     )
-
 
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (

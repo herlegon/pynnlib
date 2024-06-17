@@ -1,8 +1,9 @@
 from pynnlib.utils.p_print import *
 from pynnlib.utils import path_split
-from pynnlib.architecture import NnPytorchArchitecture
+from pynnlib.architecture import NnPytorchArchitecture, SizeConstraint
 from pynnlib.model import PytorchModel
 from ...torch_types import StateDict
+from ..torch_to_onnx import to_onnx
 from .module.upcunet import UpCunet
 
 
@@ -119,6 +120,10 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
             "unet2.conv_bottom.weight"
         ),
         parse=parse,
+        to_onnx=to_onnx,
         dtypes=('fp32', 'fp16'),
+        size_constraint=SizeConstraint(
+            min=(64, 64)
+        )
     ),
 )

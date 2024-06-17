@@ -143,13 +143,21 @@ def main():
 \n"""
     )
     parser.add_argument(
+        "--static",
+        action="store_true",
+        required=False,
+        default=False,
+        help="""(TensorRT) Use a static shape (opt_size) when converting the model.
+\n"""
+    )
+    parser.add_argument(
         "--min_size", type=str, default='64x64', required=False,
         help="""(TensorRT) min. size used to generate a tensorRT engine.
 format: WxH
 \n"""
     )
     parser.add_argument(
-        "--opt_size", type=str, default='720x576', required=False,
+        "--opt_size", type=str, default='768x576', required=False,
         help="""(TensorRT) opt. size used to generate a tensorRT engine.
 format: WxH.
 use the input video dimension if set to \'input\'.
@@ -207,6 +215,7 @@ format: WxH.
             model=model,
             opset=arguments.opset,
             fp16=fp16,
+            static=arguments.static,
             device=device,
             out_dir=path_split(model.filepath)[0],
         )

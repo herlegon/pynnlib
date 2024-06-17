@@ -16,6 +16,7 @@ HAS_PYTORCH_PACKAGE: bool = False
 __is_cuda_available__: bool = False
 try:
     import torch
+    import torchvision
     HAS_PYTORCH_PACKAGE = True
     nnlogger.debug(f"[I] PyTorch package loaded (version {torch.__version__})")
     __is_cuda_available__ = torch.cuda.is_available()

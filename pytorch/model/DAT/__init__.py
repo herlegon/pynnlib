@@ -1,8 +1,8 @@
 import math
 from typing import Literal
-from pynnlib.utils.p_print import *
-from pynnlib.architecture import NnPytorchArchitecture
+from pynnlib.architecture import NnPytorchArchitecture,SizeConstraint
 from pynnlib.model import PytorchModel
+from ...torch_types import StateDict
 from ..helpers import get_max_indice
 from ..torch_to_onnx import to_onnx
 from .module.dat_arch import DAT
@@ -12,12 +12,12 @@ from .module.dat_arch import DAT
 
 def parse(model: PytorchModel) -> None:
     in_nc: int
-    state_dict = model.state_dict
+    state_dict: StateDict = model.state_dict
     scale: int = 1
 
     # rgb_mean = (0.4488, 0.4371, 0.4040)
     # Use these values when trained with NeoSR:
-    # rgb_mean = (0.5, 0.5, 0.5)
+    rgb_mean = (0.5, 0.5, 0.5)
     img_range = 1.0
 
     embed_dim, in_nc = state_dict["conv_first.weight"].shape[:2]
@@ -55,6 +55,7 @@ def parse(model: PytorchModel) -> None:
     )
 
     # Calculate upscale ratio
+    num_feat: int = 64
     if upsampler == 'pixelshuffle':
         scale = 1
         for i in range(0, get_max_indice(state_dict, "upsample") + 1, 2):
@@ -76,9 +77,7 @@ def parse(model: PytorchModel) -> None:
     # Input image size
     if "layers.0.blocks.2.attn.attn_mask_0" in state_dict:
         img_size = int(math.sqrt(
-            math.prod(
-                state_dict["layers.0.blocks.2.attn.attn_mask_0"].shape[:2]
-            )
+            math.prod(state_dict["layers.0.blocks.2.attn.attn_mask_0"].shape[:2])
         ))
 
     # Height and Width of spatial window.
@@ -133,5 +132,10 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
         parse=parse,
         to_onnx=to_onnx,
         dtypes=['fp32', 'bf16'],
+        size_constraint=SizeConstraint(
+            min=(16, 16)
+        )
+        # fixed size for conversion to pth->onnx->trt
+
     ),
 )
