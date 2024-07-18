@@ -1,7 +1,8 @@
 from .logger import nnlogger
 from .import_libs import *
 if not is_cuda_available():
-    raise SystemError("Error: torch and torchvision must be installed")
+    print("Error: torch and torchvision must be installed and a CUDA device is mandatory.")
+    # raise SystemError("Error: torch and torchvision must be installed and a CUDA device is mandatory.")
 
 from .core import nn_lib as nnlib
 
@@ -11,6 +12,7 @@ from .model import (
     TrtModel,
     ModelExecutor,
     NnModel,
+    TrtEngine,
 )
 
 from .onnx.inference.session import OnnxSession
@@ -74,6 +76,6 @@ __all__ = [
     "flip_r_b_channels",
     "to_nchw",
     "to_hwc",
-    "MemcpyKind"
-
+    "MemcpyKind",
+    "TrtEngine",
 ]

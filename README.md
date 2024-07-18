@@ -82,7 +82,7 @@ trt_model: TrtModel = nnlib.convert_to_tensorrt(
 )
 ```
 
-## Dev: erform an inference
+## Dev: perform an inference
 with a default inference session.<br/>
 PyTorch to transfer an image (bgr, np.float32) to the execution provider (device) using pageable memory.
 

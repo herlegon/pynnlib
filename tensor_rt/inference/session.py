@@ -68,7 +68,15 @@ class TensorRtSession(GenericSession):
             torch.float16 if 'fp16' in self.model.dtypes else torch.float32
         )
         self.out_tensor_dtype: torch.dtype = self.in_tensor_dtype
+        self._in_tensor_name: str = 'input'
 
+    @property
+    def in_tensor_name(self) -> str:
+        return self._in_tensor_name
+
+    @in_tensor_name.setter
+    def in_tensor_name(self, name: str) -> None:
+        self._in_tensor_name = name
 
     def initialize(self,
         device: str = 'cuda:0',
@@ -104,11 +112,11 @@ class TensorRtSession(GenericSession):
 
 
     def warmup(self, count: int = 1):
-        shape = [*self.model.shape_strategy.min_size, self.model.in_nc]
+        shape = [*reversed(self.model.shape_strategy.opt_size), self.model.in_nc]
         tensor_shape = [
             1,
             self.model.in_nc,
-            *reversed(self.model.shape_strategy.min_size)
+            *reversed(self.model.shape_strategy.opt_size)
         ]
         context, engine = self.context, self.engine
         for idx in range(engine.num_io_tensors):

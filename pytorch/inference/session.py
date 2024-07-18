@@ -44,6 +44,7 @@ class PyTorchSession(GenericSession):
         self,
         device: str,
         fp16: bool = False,
+        warmup: bool = True,
     ) -> None:
         module: nn.Module = self.module
         self.fp16 = fp16
@@ -62,7 +63,7 @@ class PyTorchSession(GenericSession):
         nnlogger.debug(f"[V] load model to {self.device}, fp16={self.fp16}")
         module.to(self.device)
         module.half() if self.fp16 else module.float()
-        if 'cuda' in device:
+        if warmup and 'cuda' in device:
             self.warmup(3)
 
 
@@ -75,7 +76,7 @@ class PyTorchSession(GenericSession):
         nnlogger.debug(f"[V] warmup ({count}x) with a random img ({shape})")
         img = np.random.random(shape).astype(np.float32)
         for _ in range(count):
-            self.run(img)
+            self._run_torch(img)
 
 
     def run(self, in_img: np.ndarray) -> np.ndarray:

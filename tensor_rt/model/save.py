@@ -1,4 +1,5 @@
 
+from copy import deepcopy
 import os
 from pathlib import Path
 from pprint import pprint
@@ -32,9 +33,14 @@ def generate_tensorrt_basename(
     if model.shape_strategy.static:
         shape = "static_" + 'x'.join([str(x) for x in model.shape_strategy.opt_size])
     else:
-        shape = 'x'.join([str(x) for x in model.shape_strategy.min_size])
-        shape += '_' + 'x'.join([str(x) for x in model.shape_strategy.opt_size])
-        shape += '_' + 'x'.join([str(x) for x in model.shape_strategy.max_size])
+        shape_strategy = deepcopy(model.shape_strategy)
+        if shape_strategy.min_size == (0, 0):
+            shape_strategy.min_size = shape_strategy.opt_size
+        if shape_strategy.max_size == (0, 0):
+            shape_strategy.max_size = shape_strategy.opt_size
+        shape = 'x'.join([str(x) for x in shape_strategy.min_size])
+        shape += '_' + 'x'.join([str(x) for x in shape_strategy.opt_size])
+        shape += '_' + 'x'.join([str(x) for x in shape_strategy.max_size])
     tensorrt_version = trt.__version__
 
     if _has_herlegon_system_:

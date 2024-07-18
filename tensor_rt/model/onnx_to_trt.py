@@ -1,3 +1,4 @@
+from copy import deepcopy
 import numpy as np
 from pynnlib.logger import nnlogger
 from pynnlib.session import set_cuda_device
@@ -96,14 +97,20 @@ def _onnx_to_trt_engine(
         if not shape_strategy.static:
             profile = builder.create_optimization_profile()
             batch_opt = 1
+
+            strategy = deepcopy(shape_strategy)
+            if strategy.min_size == (0, 0):
+                strategy.min_size = strategy.opt_size
+            if strategy.max_size == (0, 0):
+                strategy.max_size = strategy.opt_size
+
             profile.set_shape(
                 input=input_name,
-                min=(batch_opt, model.in_nc, *reversed(shape_strategy.min_size)),
-                opt=(batch_opt, model.in_nc, *reversed(shape_strategy.opt_size)),
-                max=(batch_opt, model.in_nc, *reversed(shape_strategy.max_size)),
+                min=(batch_opt, model.in_nc, *reversed(strategy.min_size)),
+                opt=(batch_opt, model.in_nc, *reversed(strategy.opt_size)),
+                max=(batch_opt, model.in_nc, *reversed(strategy.max_size)),
             )
             builder_config.add_optimization_profile(profile)
-
 
 
         nnlogger.info("[I] Building a TensortRT engine; this may take a while...")
