@@ -82,14 +82,14 @@ class GenericSession(abc.ABC):
         return self.model.is_size_valid(size_or_shape, is_shape)
 
 
-from .onnx.inference.session import OnnxSession
-from .pytorch.inference.session import PyTorchSession
+from .nn_onnx.inference.session import OnnxSession
+from .nn_pytorch.inference.session import PyTorchSession
 
 # ModelSession = OnnxSession | PyTorchSession
 NnModelSession = TypeVar("NnModelSession", OnnxSession, PyTorchSession)
 
 try:
-    from .tensor_rt.inference.session import TensorRtSession
+    from .nn_tensor_rt.inference.session import TensorRtSession
     # ModelSession = OnnxSession | PyTorchSession | TensorRtSession
     NnModelSession = TypeVar(
         "NnModelSession",

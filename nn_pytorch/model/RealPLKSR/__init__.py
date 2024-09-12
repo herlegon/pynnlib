@@ -26,8 +26,10 @@ def parse(model: PytorchModel) -> None:
 
     use_ea: bool = bool("feats.1.attn.f.0.weight" in state_dict)
 
+    use_dysample = "to_img.init_pos" in state_dict
+
     model.update(
-        arch_name=model.arch.name,
+        arch_name=f"{model.arch_name} DySample" if use_dysample else model.arch_name,
         scale=scale,
         in_nc=in_nc,
         out_nc=out_nc,
@@ -41,6 +43,7 @@ def parse(model: PytorchModel) -> None:
         use_ea=use_ea,
         # norm_groups: int = 4,
         # dropout: float = 0,
+        dysample=use_dysample,
     )
 
 

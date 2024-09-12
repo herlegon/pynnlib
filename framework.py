@@ -4,6 +4,7 @@ from dataclasses import dataclass
 import importlib
 import os
 from pathlib import Path
+from pprint import pprint
 import random
 import re
 import sys
@@ -77,7 +78,7 @@ def import_frameworks() -> dict[NnFrameworkType, NnFramework]:
         ):
             continue
 
-        if re.subn('[-_ ]', '', dir.lower())[0] in supported_fwks:
+        if re.subn('[-_ ]', '', dir.lower().replace('nn_', ''))[0] in supported_fwks:
             nn_frameworks.append(dir)
     nnlogger.debug(f"[V] Framework directories: {', '.join(supported_fwks)}")
 

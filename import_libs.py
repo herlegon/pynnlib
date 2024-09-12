@@ -1,15 +1,31 @@
+from pprint import pprint
 from .logger import nnlogger
 
 __is_tensorrt_available__: bool = False
 try:
     nnlogger.debug("[V] Try loading tensorrt package")
     import tensorrt as trt
+    import sys
+    # pprint(sys.modules.keys())
+    modules = set(sys.modules) & set(globals())
+    module_names = [sys.modules[m] for m in modules]
+    if 'tensorrt' in module_names:
+        print(f"in modules: [{module_names}]")
+        __is_tensorrt_available__ = True
 
-    __is_tensorrt_available__ = True
-    nnlogger.debug(f"[I] Tensorrt package loaded (version {trt.__version__})")
+    # if 'trt' in sys.modules or 'tensorrt' in sys.modules:
+    #     # print(trt.__version__)
+    #     __is_tensorrt_available__ = True
+    # nnlogger.debug(f"[I] Tensorrt package loaded (version {trt.__version__})")
 
 except ModuleNotFoundError:
     nnlogger.debug("[W] Tensorrt package not found")
+
+try:
+    print(trt.__version__)
+    __is_tensorrt_available__ = True
+except:
+    __is_tensorrt_available__ = False
 
 
 HAS_PYTORCH_PACKAGE: bool = False

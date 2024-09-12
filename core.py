@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
 
-from pynnlib.pytorch.torch_types import StateDict
+from .nn_pytorch.torch_types import StateDict
 from .import_libs import is_tensorrt_available
 from .logger import nnlogger
 from datetime import datetime
@@ -13,9 +13,9 @@ from pprint import pprint
 import re
 import time
 
-from .tensor_rt.trt_types import ShapeStrategy
 try:
-    from .tensor_rt.model.save import generate_tensorrt_basename
+    from .nn_tensor_rt.trt_types import ShapeStrategy
+    from .nn_tensor_rt.model.save import generate_tensorrt_basename
 except:
     # nnlogger.debug("[W] TensorRT is not supported: model cannot be converted")
     def generate_tensorrt_basename(*args) -> str:
@@ -47,7 +47,7 @@ from .nn_types import (
     NnModelObject,
     NnFrameworkType
 )
-from .pytorch.model.unpickler import RestrictedUnpickle
+from .nn_pytorch.model.unpickler import RestrictedUnpickle
 from .session import NnModelSession
 
 

@@ -5,11 +5,11 @@ from typing import Any, TYPE_CHECKING
 
 from .utils import arg_list
 
-from .pytorch.torch_types import (
+from .nn_pytorch.torch_types import (
     StateDict,
     TorchNnModule,
 )
-from .tensor_rt.trt_types import (
+from .nn_tensor_rt.trt_types import (
     ShapeStrategy,
     TrtEngine,
 )

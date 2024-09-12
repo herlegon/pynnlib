@@ -5,8 +5,8 @@ import onnx
 from pathlib import PurePath
 from typing import Literal, TypeAlias
 
-from .pytorch.torch_types import StateDict
-from .tensor_rt.trt_types import TrtEngine
+from .nn_pytorch.torch_types import StateDict
+from .nn_tensor_rt.trt_types import TrtEngine
 
 
 NnArchitectureType: TypeAlias = str
@@ -19,14 +19,12 @@ class NnFrameworkType(Enum):
 
 def filepath_to_fwk(filepath: str) -> NnFrameworkType:
     # Cannot use _value2member_map_ because of lower/upper case
-    value = PurePath(os.path.dirname(filepath)).parts[-1]
+    value = PurePath(os.path.dirname(filepath)).parts[-1].replace('nn_', '')
     enum_dict = {t.value.lower(): t.value for t in NnFrameworkType}
     try:
         return NnFrameworkType._value2member_map_[enum_dict[value]]
     except:
         raise ValueError(f"[E] {value} is not a valid framework key")
-
-
 
 
 NnModelObject = onnx.ModelProto | StateDict | TrtEngine

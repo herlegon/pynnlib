@@ -234,19 +234,12 @@ class SCUNet(nn.Module):
         # self.apply(self._init_weights)
 
 
-    @staticmethod
-    def add_padding(x: torch.Tensor) -> torch.Tensor:
-        _, _, h, w = x.size()
-        mod_pad_h = (64 - h % 64) % 64
-        mod_pad_w = (64 - w % 64) % 64
-        if mod_pad_h or mod_pad_w:
-            x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
-        return x
-
-
     def forward(self, x0: torch.Tensor) -> torch.Tensor:
         h, w = x0.size()[-2:]
-        x0 = self.add_padding(x0)
+
+        mod_pad_h: int = (64 - h % 64) % 64
+        mod_pad_w: int = (64 - w % 64) % 64
+        x0 = F.pad(x0, (0, mod_pad_w, 0, mod_pad_h), "reflect")
 
         x1 = self.m_head(x0)
         x2 = self.m_down1(x1)

@@ -3,6 +3,8 @@ import torch
 from torch import nn
 from torch.nn.init import trunc_normal_
 
+from .dysample import DySample
+
 
 
 class DCCM(nn.Sequential):
@@ -107,6 +109,7 @@ class RealPLKSR(nn.Module):
         norm_groups: int = 4,
         dropout: float = 0,
         training: bool = False,
+        dysample: bool = False,
         **kwargs,
     ):
         super().__init__()
@@ -130,12 +133,22 @@ class RealPLKSR(nn.Module):
             torch.repeat_interleave, repeats=upscaling_factor**2, dim=1
         )
 
-        self.to_img = nn.PixelShuffle(upscaling_factor)
+        if dysample:
+            # 3 channels for DySample
+            in_ch: int = 3
+            out_ch: int = 3
+
+            groups = out_ch if upscaling_factor % 2 != 0 else 4
+            self.to_img = DySample(
+                in_ch * upscaling_factor**2,
+                out_ch,
+                upscaling_factor,
+                groups=groups,
+                end_convolution=upscaling_factor != 1,
+            )
+        else:
+            self.to_img = nn.PixelShuffle(upscaling_factor)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = self.feats(x) + self.repeat_op(x)
         return self.to_img(x)
-
-
-def realplksr_s(**kwargs):
-    return realplksr(n_blocks=12, kernel_size=13, use_ea=False, **kwargs)

@@ -4,6 +4,11 @@ if not is_cuda_available():
     print("Error: torch and torchvision must be installed and a CUDA device is mandatory.")
     # raise SystemError("Error: torch and torchvision must be installed and a CUDA device is mandatory.")
 
+if not is_tensorrt_available():
+    print("Warning: no CUDA device detected, tensorRT is not available")
+else:
+    print("CUDA device detected, tensorRT is available")
+
 from .core import nn_lib as nnlib
 
 from .model import (
@@ -15,19 +20,19 @@ from .model import (
     TrtEngine,
 )
 
-from .onnx.inference.session import OnnxSession
-from .pytorch.inference.session import PyTorchSession
+from .nn_onnx.inference.session import OnnxSession
+from .nn_pytorch.inference.session import PyTorchSession
 from .session import (
     set_cuda_device,
     NnModelSession
 )
 
 try:
-    from .tensor_rt.inference.session import TensorRtSession
+    from .nn_tensor_rt.inference.session import TensorRtSession
 except:
     TensorRtSession = None
 
-from .tensor_rt.trt_types import ShapeStrategy
+from .nn_tensor_rt.trt_types import ShapeStrategy
 
 from .nn_types import (
     NnFrameworkType,
