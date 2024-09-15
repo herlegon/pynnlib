@@ -77,16 +77,21 @@ def get_shape_strategy(engine, tensor_name: str) -> ShapeStrategy:
 
 def parse_engine(model: TrtModel) -> None:
     set_cuda_device(model.device)
+    engine = None
     if os.path.exists(model.filepath):
         trt_runtime = trt.Runtime(TRT_LOGGER)
         with open(model.filepath, 'rb') as f:
             engine_data = f.read()
-        engine = trt_runtime.deserialize_cuda_engine(engine_data)
+        try:
+            engine = trt_runtime.deserialize_cuda_engine(engine_data)
+        except:
+            print("[E] Not a valid engine")
 
     elif model.engine is not None:
         engine = model.engine
-    else:
-        raise ValueError("No valid engine found")
+
+    if engine is None:
+        raise ValueError("[E] Not a compatible engine")
 
     tensor_shapes_dtype = get_shapes_dtype(engine)
     if len(tensor_shapes_dtype['inputs']) != 1:
