@@ -41,7 +41,7 @@ class OnnxSession:
                 is_cuda_available()
                 and 'CUDAExecutionProvider' in ort.get_available_providers()
             ):
-                if (match := re.match(re.compile("^cuda[:]?(\d)?$"), device)):
+                if (match := re.match(re.compile(r"^cuda[:]?(\d)?$"), device)):
                     self.cuda_device_id = (
                         int(match.group(1))
                         if match.group(1) is not None
