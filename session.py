@@ -1,23 +1,27 @@
 from __future__ import annotations
 import abc
-import cupy as cp
 from typing import TypeVar
 from .import_libs import is_cuda_available
 from .nn_types import NnFrameworkType
 from .model import NnModel
 
+if is_cuda_available():
+    import cupy as cp
 
-def set_cuda_device(device: str) -> None:
-    if not is_cuda_available():
-        print(f"[E] No cuda device found, cannot set {device}")
-        return
-    device_no: int = 0
-    try:
-        device_no = int(device.split(":")[1])
-    except:
+    def set_cuda_device(device: str) -> None:
+        if not is_cuda_available():
+            print(f"[E] No cuda device found, cannot set {device}")
+            return
+        device_no: int = 0
+        try:
+            device_no = int(device.split(":")[1])
+        except:
+            pass
+        # print(f"[I] Use cuda device {device_no}")
+        cp.cuda.runtime.setDevice(device_no)
+else:
+    def set_cuda_device(device: str) -> None:
         pass
-    # print(f"[I] Use cuda device {device_no}")
-    cp.cuda.runtime.setDevice(device_no)
 
 
 class GenericSession(abc.ABC):
