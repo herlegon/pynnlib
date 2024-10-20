@@ -47,6 +47,13 @@ class NnGenericArchitecture:
 
     size_constraint: SizeConstraint | None = None
 
+    # is video/multiframes
+    is_temporal: bool = False
+
+    # Temporal parameters
+    # temporal_params: TemporalParameters | None = None
+
+
     @overload
     def update(self, d: dict[Any, Any]) -> None: ...
     @overload
@@ -63,6 +70,7 @@ class NnGenericArchitecture:
 
         elif k is not None and hasattr(self, k):
             setattr(self, k, v)
+
 
 
 ConvertToOnnxFct = Callable[
