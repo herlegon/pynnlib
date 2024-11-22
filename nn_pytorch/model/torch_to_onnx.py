@@ -29,7 +29,7 @@ def to_onnx(
     try:
         session: PyTorchSession = model.arch.create_session(model)
     except:
-        raise NotImplementedError(f"{model.arch.name} is not supported")
+        raise NotImplementedError(red(f"{model.arch.name} is not supported"))
         return None
 
     if not is_cuda_available():
