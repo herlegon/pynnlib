@@ -47,6 +47,7 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
         to_onnx=to_onnx,
         dtypes=set(['fp32', 'fp16']),
         infer_type=InferType(
+            type='inpaint',
             inputs=2,
             outputs=1
         )

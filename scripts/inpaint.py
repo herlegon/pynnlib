@@ -273,9 +273,9 @@ Fallback to float if the execution provider does not support it
     if arguments.verbose:
         print("Initialize the session")
     try:
-        session.initialize(device=device, fp16=fp16, warmup=False)
+        session.initialize(device=device, fp16=fp16)
     except Exception as e:
-        session.initialize(device=device, fp16=fp16, warmup=False)
+        session.initialize(device=device, fp16=fp16)
         sys.exit(red(f"Error: {e}"))
 
     print(lightcyan(f"Inference with"), f"{model.filepath}")

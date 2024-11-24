@@ -340,7 +340,7 @@ class SwinTransformerBlock(nn.Module):
         # H, W = self.input_resolution
         H, W = x_size
         B, L, C = x.shape
-        assert L == H * W, "input feature has wrong size"
+        # assert L == H * W, "input feature has wrong size"
 
         shortcut = x
         x = x.view(B, H, W, C)
@@ -1004,7 +1004,6 @@ class FirstStage(nn.Module):
                 mul_map = torch.ones_like(x, dtype=x.dtype) * 0.5
                 mul_map = F.dropout(mul_map, training=True)
                 ws = self.ws_style(ws[:, -1])
-                print(f"FirstStage, ws.dtype: {ws.dtype}")
                 add_n = self.to_square(ws).unsqueeze(1)
                 add_n = F.interpolate(
                     add_n,
@@ -1187,7 +1186,6 @@ class Generator(nn.Module):
         skip_w_avg_update = False,
         noise_mode='random',
     ):
-        print(f"Generator: {z.dtype}")
         ws = self.mapping(
             z,
             c,
@@ -1224,18 +1222,18 @@ class MAT(nn.Module):
         masks: [H, W] mask area == 255
         return: BGR IMAGE
         """
-        print("devices")
-        print(x.device)
-        print(mask.device)
-        print("dtypes")
-        print(x.dtype)
-        print(mask.dtype)
-        print(f"mask: {mask.shape}")
-        print(torch.finfo(torch.float16).eps)
-        print(torch.finfo(torch.float32).eps)
+        # print("devices")
+        # print(x.device)
+        # print(mask.device)
+        # print("dtypes")
+        # print(x.dtype)
+        # print(mask.dtype)
+        # print(f"mask: {mask.shape}")
+        # print(torch.finfo(torch.float16).eps)
+        # print(torch.finfo(torch.float32).eps)
 
-        print(torch.finfo(torch.float16).smallest_normal)
-        print(torch.finfo(torch.float32).smallest_normal)
+        # print(torch.finfo(torch.float16).smallest_normal)
+        # print(torch.finfo(torch.float32).smallest_normal)
 
         # [0, 1] -> [-1, 1]
         x = x * 2 - 1
@@ -1249,13 +1247,13 @@ class MAT(nn.Module):
 
         mod_pad_h: int = (512 - h % 512) % 512
         mod_pad_w: int = (512 - w % 512) % 512
-        print(x.shape)
-        print(f"pad: {mod_pad_h}, {mod_pad_w}")
+        # print(x.shape)
+        # print(f"pad: {mod_pad_h}, {mod_pad_w}")
         x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "constant")
-        print(x.shape)
+        # print(x.shape)
         mask = F.pad(mask, (0, mod_pad_w, 0, mod_pad_h), "constant")
 
-        print(f"h, w: {h}, {w}")
+        # print(f"h, w: {h}, {w}")
 
         # no Labels.
         label = torch.zeros([1, self.c_dim], device=x.device, dtype=x.dtype)

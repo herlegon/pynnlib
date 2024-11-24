@@ -65,7 +65,7 @@ def _get_filter_size(f):
     with suppress_tracer_warnings():
         fw = int(fw)
         fh = int(fh)
-    assert_shape(f, [fh, fw][:f.ndim])
+    # assert_shape(f, [fh, fw][:f.ndim])
     assert fw >= 1 and fh >= 1
     return fw, fh
 
@@ -245,10 +245,10 @@ def _upfirdn2d_cuda(up=1, down=1, padding=0, flip_filter=False, gain=1):
     class Upfirdn2dCuda(torch.autograd.Function):
         @staticmethod
         def forward(ctx, x, f): # pylint: disable=arguments-differ
-            assert isinstance(x, torch.Tensor) and x.ndim == 4
+            # assert isinstance(x, torch.Tensor) and x.ndim == 4
             if f is None:
                 f = torch.ones([1, 1], dtype=torch.float32, device=x.device)
-            assert isinstance(f, torch.Tensor) and f.ndim in [1, 2]
+            # assert isinstance(f, torch.Tensor) and f.ndim in [1, 2]
             y = x
             if f.ndim == 2:
                 y = _plugin.upfirdn2d(y, f, upx, upy, downx, downy, padx0, padx1, pady0, pady1, flip_filter, gain)

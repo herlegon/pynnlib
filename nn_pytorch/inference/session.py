@@ -1,5 +1,6 @@
 from __future__ import annotations
 from collections.abc import Callable
+import time
 import numpy as np
 from pprint import pprint
 import torch
@@ -40,11 +41,11 @@ class PyTorchSession(GenericSession):
         self._process_fct: Callable[[np.ndarray], np.ndarray] = self._torch_process
         infer_type: InferType = model.arch.infer_type
         if (
-            infer_type.type == 'simple'
+            infer_type.type == 'inpaint'
             and infer_type.inputs == 2
             and infer_type.outputs == 1
         ):
-            self._process_fct = self._torch_process_2i_1o
+            self._process_fct = self._torch_process_inpaint
 
         elif (
             infer_type.type != 'simple'
@@ -130,7 +131,7 @@ class PyTorchSession(GenericSession):
 
 
     @torch.inference_mode()
-    def _torch_process_2i_1o(self, in_img: np.ndarray, in_img2: np.ndarray) -> np.ndarray:
+    def _torch_process_inpaint(self, in_img: np.ndarray, in_img2: np.ndarray) -> np.ndarray:
         # Used for inpaiting
         in_tensor = torch.from_numpy(np.ascontiguousarray(in_img))
         in_tensor = in_tensor.to(self.device, dtype=torch.float32)
@@ -138,13 +139,17 @@ class PyTorchSession(GenericSession):
         in_tensor = flip_r_b_channels(in_tensor)
         in_tensor = to_nchw(in_tensor).contiguous()
 
+        if len(in_img2.shape) > 2:
+            in_img2 = in_img2[:,:,0]
         in_tensor2 = torch.from_numpy(np.ascontiguousarray(in_img2))
         in_tensor2 = in_tensor2.to(self.device, dtype=torch.float32)
         in_tensor2 = in_tensor2.half() if self.fp16 else in_tensor2.float()
         in_tensor2 = to_nchw(in_tensor2).contiguous()
 
+        start_time = time.time()
         out_tensor: Tensor = self.module(in_tensor, in_tensor2)
         out_tensor = torch.clamp_(out_tensor, 0, 1)
+        print(f"elapsed: {1000 * (time.time() - start_time):.1f}ms")
 
         out_tensor = to_hwc(out_tensor)
         out_tensor = flip_r_b_channels(out_tensor)

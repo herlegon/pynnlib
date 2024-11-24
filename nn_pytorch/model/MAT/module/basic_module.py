@@ -1,4 +1,4 @@
-import sys
+from typing import Literal
 import numpy as np
 import torch
 import torch.nn as nn
@@ -220,10 +220,14 @@ class StyleConv(torch.nn.Module):
         self.act_gain = activation_funcs[activation].def_gain
         self.conv_clamp = conv_clamp
 
-    def forward(self, x, style, noise_mode='random', gain=1):
+    def forward(
+        self,
+        x,
+        style,
+        noise_mode: Literal['random', 'const', 'none'] = 'random',
+        gain=1
+    ):
         x = self.conv(x, style)
-
-        assert noise_mode in ['random', 'const', 'none']
 
         if self.use_noise:
             if noise_mode == 'random':
@@ -466,7 +470,6 @@ class MappingNet(torch.nn.Module):
         skip_w_avg_update: bool = False
     ):
         # Embed, normalize, and concat inputs.
-        print(f"MappingNet: {z.dtype}")
         x = None
         if self.z_dim > 0:
             x = normalize_2nd_moment(z)

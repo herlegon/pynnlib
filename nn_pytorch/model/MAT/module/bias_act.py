@@ -125,7 +125,7 @@ def _bias_act_ref(
     act: str = 'linear',
     alpha = None,
     gain = None,
-    clamp = None
+    clamp: int | None = None
 ):
     """Slow reference implementation of `bias_act()` using standard TensorFlow ops.
     """

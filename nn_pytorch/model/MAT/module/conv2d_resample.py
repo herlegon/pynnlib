@@ -22,7 +22,7 @@ from .conv2d_gradfix import conv_transpose2d, conv2d
 def _get_weight_shape(w: Tensor):
     with suppress_tracer_warnings(): # this value will be treated as a constant
         shape = [int(sz) for sz in w.shape]
-    assert_shape(w, shape)
+    # assert_shape(w, shape)
     return shape
 
 
@@ -107,19 +107,12 @@ def conv2d_resample(
         Tensor of the shape `[batch_size, num_channels, out_height, out_width]`.
     """
     # Validate arguments.
-    assert isinstance(x, torch.Tensor) and (x.ndim == 4)
-    assert isinstance(w, torch.Tensor) and (w.ndim == 4)
-    print(f"w={w.dtype}")
-    print(f"x={x.dtype}")
-    if w.dtype == torch.float64:
-        raise ValueError(w.dtype)
-    if x.dtype == torch.float64:
-        raise ValueError(x.dtype)
-    assert (w.dtype == x.dtype)
-    assert f is None or (isinstance(f, torch.Tensor) and f.ndim in [1, 2])
-    assert isinstance(up, int) and (up >= 1)
-    assert isinstance(down, int) and (down >= 1)
-    assert isinstance(groups, int) and (groups >= 1)
+    # assert isinstance(x, torch.Tensor) and (x.ndim == 4)
+    # assert isinstance(w, torch.Tensor) and (w.ndim == 4) and (w.dtype == x.dtype)
+    # assert f is None or (isinstance(f, torch.Tensor) and f.ndim in [1, 2])
+    # assert isinstance(up, int) and (up >= 1)
+    # assert isinstance(down, int) and (down >= 1)
+    # assert isinstance(groups, int) and (groups >= 1)
     out_channels, in_channels_per_group, kh, kw = _get_weight_shape(w)
     fw, fh = _get_filter_size(f)
     px0, px1, py0, py1 = _parse_padding(padding)
