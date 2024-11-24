@@ -73,8 +73,12 @@ def import_model_architectures() -> list[NnPytorchArchitecture]:
     return imported_archs
 
 
-def contains_keys(state_dict: StateDict, keys: tuple[str | tuple[str]]) -> bool:
+def contains_all_keys(state_dict: StateDict, keys: tuple[str | tuple[str]]) -> bool:
     return all(key in state_dict for key in keys)
+
+
+def contains_any_keys(state_dict: StateDict, keys: tuple[str | tuple[str]]) -> bool:
+    return any(key in state_dict for key in keys)
 
 
 def create_session(model: Type[PytorchModel]) -> Type[PytorchModel]:
@@ -91,5 +95,12 @@ MODEL_ARCHITECTURES: list[NnPytorchArchitecture] = import_model_architectures()
 # Append common variables for all architectures
 for arch in MODEL_ARCHITECTURES:
     arch.type = arch.name
-    arch.detect = partial(contains_keys, keys=arch.detection_keys)
-    arch.create_session = create_session
+
+    arch.detect = (
+        partial(contains_all_keys, keys=arch.detection_keys)
+        if arch.detect is None
+        else partial(arch.detect, keys=arch.detection_keys)
+    )
+
+    if arch.create_session is None:
+        arch.create_session = create_session

@@ -1,4 +1,4 @@
-from pynnlib.architecture import NnPytorchArchitecture, SizeConstraint
+from pynnlib.architecture import InferType, NnPytorchArchitecture, SizeConstraint
 from pynnlib.model import PytorchModel
 from ..helpers import (
     get_scale_and_out_nc,
@@ -14,7 +14,7 @@ def parse(model: PytorchModel) -> None:
     num_block: tuple[int, int, int] = (5, 3, 2)
     scale: int = 4
 
-    # max_indice = get_max_indice(model.state_dict, "body")
+    max_indice = get_max_indice(model.state_dict, "body")
     in_nc: int = 3
     # num_feat, in_nc = model.state_dict["body.0.weight"].shape[:2]
     # num_conv: int = (max_indice - 2) // 2
@@ -42,9 +42,13 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
         parse=parse,
         to_onnx=to_onnx,
         dtypes=('fp32', 'fp16'),
-        is_temporal=True,
         # size_constraint=SizeConstraint(
         #     min=(64, 64)
         # )
+        infer_type=InferType(
+            type='temporal',
+            inputs=2,
+            outputs=1,
+        )
     ),
 )

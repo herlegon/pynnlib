@@ -126,10 +126,10 @@ class TensorRtSession(GenericSession):
         nnlogger.debug(f"[V] warmup ({count}x) with a random img ({shape})")
         img = np.random.random(shape).astype(np.float32)
         for _ in range(count):
-            self.run(img)
+            self.process(img)
 
 
-    def run(self, in_img: np.ndarray) -> np.ndarray | None:
+    def process(self, in_img: np.ndarray) -> np.ndarray | None:
         """This is the worst optimized inference function to perform inference
         of TensorRT engines.
         """

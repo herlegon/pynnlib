@@ -146,9 +146,7 @@ class NnLib:
                 model_path.replace(".pth", "_rlg.pth")
             )
 
-        if any(x <= 0 for x in [model.scale,
-                                model.in_nc,
-                                model.out_nc]):
+        if any(x <= 0 for x in (model.scale, model.in_nc, model.out_nc)):
             nnlogger.debug("warning: at least a property has not been found, unsupported model")
             # return None
 
@@ -428,7 +426,7 @@ class NnLib:
         framework: NnFrameworkType,
         ModelSession: NnModelSession
     ):
-        """Set a custom contructor when creating a new session"""
+        """Set a custom session contructor ffor a framework"""
         if framework == NnFrameworkType.TENSORRT and not is_tensorrt_available():
             raise ValueError("[E] Framework not supported: cannot set a custom session function")
         self.frameworks[framework].Session = ModelSession

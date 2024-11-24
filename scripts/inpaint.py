@@ -82,6 +82,14 @@ def main():
     )
 
     parser.add_argument(
+        "--mask",
+        type=str,
+        default='',
+        required=True,
+        help="Mask."
+    )
+
+    parser.add_argument(
         "-s",
         "--suffix",
         type=str,
@@ -180,7 +188,7 @@ Fallback to float if the execution provider does not support it
         nnlogger.addHandler(logging.StreamHandler(sys.stdout))
         nnlogger.setLevel("DEBUG")
 
-    # Open image as float, the inference session converts
+    # Open image/mask as float, the inference session converts
     # the datatype as needed
     in_img: np.ndarray | None = None
     in_img_fp = absolute_path(arguments.img)
@@ -189,17 +197,29 @@ Fallback to float if the execution provider does not support it
     except:
         sys.exit(red(f"Failed to open image: {arguments.img}"))
 
+    in_mask: np.ndarray | None = None
+    in_mask_fp = absolute_path(arguments.mask)
+    try:
+        in_mask = load_image_fp32(in_mask_fp)
+    except:
+        sys.exit(red(f"Failed to open mask: {arguments.mask}"))
+
     # Output image filepath:
     dir, basename, ext = path_split(in_img_fp)
     out_img_fp: str = os.path.join(dir, f"{basename}{arguments.suffix}{ext}")
 
     print(lightcyan(f"Input image:"), f"{in_img_fp}")
+    print(lightcyan(f"Mask:"), f"{in_mask_fp}")
     print(lightcyan(f"Output image:"), f"{out_img_fp}")
 
     # Select a device to run the inference
     # For a tensorrt engine, the device has to be a cuda device
-    device_for_parse: str = "cuda" if is_cuda_available() else 'cpu'
-
+    device_for_parse: str = (
+        "cuda"
+        if is_cuda_available() and arguments.cuda
+        else 'cpu'
+    )
+    print(lightcyan(f"Use device for detection:"), f"{device_for_parse}")
     # Open model file
     model_filepath: str = absolute_path(arguments.model)
     if not os.path.isfile(model_filepath):
@@ -208,6 +228,7 @@ Fallback to float if the execution provider does not support it
     try:
         model: NnModel = nnlib.open(model_filepath, device_for_parse)
     except:
+        model: NnModel = nnlib.open(model_filepath, device_for_parse)
         sys.exit(red(f"Failed to open model: {arguments.model}"))
     elapsed = time.time() - start_time
     print(lightcyan(f"Model:"), f"{model.filepath}")
@@ -252,9 +273,9 @@ Fallback to float if the execution provider does not support it
     if arguments.verbose:
         print("Initialize the session")
     try:
-        session.initialize(device=device, fp16=fp16)
+        session.initialize(device=device, fp16=fp16, warmup=False)
     except Exception as e:
-        session.initialize(device=device, fp16=fp16)
+        session.initialize(device=device, fp16=fp16, warmup=False)
         sys.exit(red(f"Error: {e}"))
 
     print(lightcyan(f"Inference with"), f"{model.filepath}")
@@ -270,7 +291,7 @@ Fallback to float if the execution provider does not support it
 
     start_time= time.time()
     for _ in range(inferences):
-        out_img: np.ndarray = session.process(in_img)
+        out_img: np.ndarray = session.process(in_img, in_mask)
     elapsed = time.time() - start_time
 
     if inferences > 1:

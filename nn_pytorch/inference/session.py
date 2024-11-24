@@ -17,10 +17,15 @@ from pynnlib.utils.torch_tensor import (
 )
 from ..torch_types import TorchNnModule
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from pynnlib.architecture import InferType
+
 
 class PyTorchSession(GenericSession):
     """An example of session used to perform the inference using a PyTorch model.
     There is a reason why the initialization is not done in the __init__: mt/mp
+    It maybe be overloaded by a customized session
     """
 
     def __init__(self, model: PytorchModel):
@@ -32,7 +37,21 @@ class PyTorchSession(GenericSession):
         for _, v in self.model.module.named_parameters():
             v.requires_grad = False
 
-        self._run_fct: Callable[[np.ndarray], np.ndarray | None] = self._run_torch
+        self._process_fct: Callable[[np.ndarray], np.ndarray] = self._torch_process
+        infer_type: InferType = model.arch.infer_type
+        if (
+            infer_type.type == 'simple'
+            and infer_type.inputs == 2
+            and infer_type.outputs == 1
+        ):
+            self._process_fct = self._torch_process_2i_1o
+
+        elif (
+            infer_type.type != 'simple'
+            or infer_type.inputs != 1
+            or infer_type.outputs != 1
+        ):
+            raise NotImplementedError(f"Cannot create a session for arch {model.arch_name} ")
 
 
     @property
@@ -62,7 +81,7 @@ class PyTorchSession(GenericSession):
 
         nnlogger.debug(f"[V] load model to {self.device}, fp16={self.fp16}")
         module.to(self.device)
-        module.half() if self.fp16 else module.float()
+        module = module.half() if self.fp16 else module.float()
         if warmup and 'cuda' in device:
             self.warmup(3)
 
@@ -74,17 +93,25 @@ class PyTorchSession(GenericSession):
         else:
             shape = (32, 32, self.model.in_nc)
         nnlogger.debug(f"[V] warmup ({count}x) with a random img ({shape})")
-        img = np.random.random(shape).astype(np.float32)
+
+        # TODO: specific warmup
+        imgs: list[np.ndarray] = list([
+            np.random.random(shape).astype(np.float32)
+            for _ in range(self.model.arch.infer_type.inputs)
+        ])
         for _ in range(count):
-            self._run_torch(img)
+            self._process_fct(*imgs)
 
 
-    def run(self, in_img: np.ndarray) -> np.ndarray:
-        return self._run_fct(in_img)
+    def process(self, in_img: np.ndarray, *args, **kwargs) -> np.ndarray:
+        return self._process_fct(in_img, *args, **kwargs)
 
 
     @torch.inference_mode()
-    def _run_torch(self, in_img: np.ndarray) -> np.ndarray:
+    def _torch_process(self, in_img: np.ndarray) -> np.ndarray:
+        """Example of how to perform an inference session.
+        This is an unoptimized function
+        """
         in_tensor = torch.from_numpy(np.ascontiguousarray(in_img))
         in_tensor = in_tensor.to(self.device, dtype=torch.float32)
         in_tensor = in_tensor.half() if self.fp16 else in_tensor.float()
@@ -102,5 +129,27 @@ class PyTorchSession(GenericSession):
         return out_img
 
 
+    @torch.inference_mode()
+    def _torch_process_2i_1o(self, in_img: np.ndarray, in_img2: np.ndarray) -> np.ndarray:
+        # Used for inpaiting
+        in_tensor = torch.from_numpy(np.ascontiguousarray(in_img))
+        in_tensor = in_tensor.to(self.device, dtype=torch.float32)
+        in_tensor = in_tensor.half() if self.fp16 else in_tensor.float()
+        in_tensor = flip_r_b_channels(in_tensor)
+        in_tensor = to_nchw(in_tensor).contiguous()
 
+        in_tensor2 = torch.from_numpy(np.ascontiguousarray(in_img2))
+        in_tensor2 = in_tensor2.to(self.device, dtype=torch.float32)
+        in_tensor2 = in_tensor2.half() if self.fp16 else in_tensor2.float()
+        in_tensor2 = to_nchw(in_tensor2).contiguous()
+
+        out_tensor: Tensor = self.module(in_tensor, in_tensor2)
+        out_tensor = torch.clamp_(out_tensor, 0, 1)
+
+        out_tensor = to_hwc(out_tensor)
+        out_tensor = flip_r_b_channels(out_tensor)
+        out_tensor = out_tensor.float()
+        out_img: np.ndarray = out_tensor.detach().cpu().numpy()
+
+        return out_img
 
