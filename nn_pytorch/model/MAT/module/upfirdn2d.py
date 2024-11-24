@@ -17,9 +17,9 @@ from torch import Tensor
 import traceback
 
 from .custom_ops import get_plugin
-from .util import assert_shape, suppress_tracer_warnings
-from . import conv2d_gradfix
-
+# from .util import assert_shape, suppress_tracer_warnings
+# from . import conv2d_gradfix
+from torch import conv2d
 
 
 _inited = False
@@ -39,17 +39,17 @@ def _init():
 def _parse_scaling(scaling):
     if isinstance(scaling, int):
         scaling = [scaling, scaling]
-    assert isinstance(scaling, (list, tuple))
-    assert all(isinstance(x, int) for x in scaling)
+    # assert isinstance(scaling, (list, tuple))
+    # assert all(isinstance(x, int) for x in scaling)
     sx, sy = scaling
-    assert sx >= 1 and sy >= 1
+    # assert sx >= 1 and sy >= 1
     return sx, sy
 
 def _parse_padding(padding):
     if isinstance(padding, int):
         padding = [padding, padding]
-    assert isinstance(padding, (list, tuple))
-    assert all(isinstance(x, int) for x in padding)
+    # assert isinstance(padding, (list, tuple))
+    # assert all(isinstance(x, int) for x in padding)
     if len(padding) == 2:
         padx, pady = padding
         padding = [padx, padx, pady, pady]
@@ -59,14 +59,14 @@ def _parse_padding(padding):
 def _get_filter_size(f):
     if f is None:
         return 1, 1
-    assert isinstance(f, torch.Tensor) and f.ndim in [1, 2]
+    # assert isinstance(f, torch.Tensor) and f.ndim in [1, 2]
     fw = f.shape[-1]
     fh = f.shape[0]
-    with suppress_tracer_warnings():
-        fw = int(fw)
-        fh = int(fh)
+    # with suppress_tracer_warnings():
+    fw = int(fw)
+    fh = int(fh)
     # assert_shape(f, [fh, fw][:f.ndim])
-    assert fw >= 1 and fh >= 1
+    # assert fw >= 1 and fh >= 1
     return fw, fh
 
 
@@ -215,10 +215,10 @@ def _upfirdn2d_ref(x, f: Tensor, up=1, down=1, padding=0, flip_filter=False, gai
     # Convolve with the filter.
     f = f[np.newaxis, np.newaxis].repeat([num_channels, 1] + [1] * f.ndim)
     if f.ndim == 4:
-        x = conv2d_gradfix.conv2d(input=x, weight=f, groups=num_channels)
+        x = conv2d(input=x, weight=f, groups=num_channels)
     else:
-        x = conv2d_gradfix.conv2d(input=x, weight=f.unsqueeze(2), groups=num_channels)
-        x = conv2d_gradfix.conv2d(input=x, weight=f.unsqueeze(3), groups=num_channels)
+        x = conv2d(input=x, weight=f.unsqueeze(2), groups=num_channels)
+        x = conv2d(input=x, weight=f.unsqueeze(3), groups=num_channels)
 
     # Downsample by throwing away pixels.
     x = x[:, :, ::downy, ::downx]
@@ -231,6 +231,7 @@ _upfirdn2d_cuda_cache = dict()
 def _upfirdn2d_cuda(up=1, down=1, padding=0, flip_filter=False, gain=1):
     """Fast CUDA implementation of `upfirdn2d()` using custom ops.
     """
+    raise ValueError("don't use this")
     # Parse arguments.
     upx, upy = _parse_scaling(up)
     downx, downy = _parse_scaling(down)

@@ -6,6 +6,7 @@ from pprint import pprint
 import torch
 import torch.nn as nn
 from torch import Tensor
+from viztracer import VizTracer, log_sparse, trace_and_save
 from pynnlib import is_cuda_available
 from pynnlib.logger import nnlogger
 from pynnlib.model import PytorchModel
@@ -75,7 +76,8 @@ class PyTorchSession(GenericSession):
         self.fp16 = self.fp16 and 'fp16' in self.model.arch.dtypes
 
         nnlogger.debug(f"[V] Initialize a PyTorch inference session fp16={self.fp16}")
-        torch.backends.cudnn.benchmark = True
+        torch.backends.cudnn.enabled = True
+        # torch.backends.cudnn.benchmark = False
         module.eval()
         for param in module.parameters():
             param.requires_grad = False
@@ -101,7 +103,7 @@ class PyTorchSession(GenericSession):
             for _ in range(self.model.arch.infer_type.inputs)
         ])
         for _ in range(count):
-            self._process_fct(*imgs)
+            self._process_fct(*imgs, trace=False)
 
 
     def process(self, in_img: np.ndarray, *args, **kwargs) -> np.ndarray:
@@ -130,8 +132,9 @@ class PyTorchSession(GenericSession):
         return out_img
 
 
+
     @torch.inference_mode()
-    def _torch_process_inpaint(self, in_img: np.ndarray, in_img2: np.ndarray) -> np.ndarray:
+    def _torch_process_inpaint(self, in_img: np.ndarray, in_img2: np.ndarray, trace: bool = True) -> np.ndarray:
         # Used for inpaiting
         in_tensor = torch.from_numpy(np.ascontiguousarray(in_img))
         in_tensor = in_tensor.to(self.device, dtype=torch.float32)
@@ -146,10 +149,8 @@ class PyTorchSession(GenericSession):
         in_tensor2 = in_tensor2.half() if self.fp16 else in_tensor2.float()
         in_tensor2 = to_nchw(in_tensor2).contiguous()
 
-        start_time = time.time()
         out_tensor: Tensor = self.module(in_tensor, in_tensor2)
         out_tensor = torch.clamp_(out_tensor, 0, 1)
-        print(f"elapsed: {1000 * (time.time() - start_time):.1f}ms")
 
         out_tensor = to_hwc(out_tensor)
         out_tensor = flip_r_b_channels(out_tensor)
@@ -157,4 +158,5 @@ class PyTorchSession(GenericSession):
         out_img: np.ndarray = out_tensor.detach().cpu().numpy()
 
         return out_img
+
 

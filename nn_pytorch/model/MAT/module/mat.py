@@ -1202,8 +1202,6 @@ class MAT(nn.Module):
 
     def __init__(self, fp16: bool = True):
         super().__init__()
-        batch: int = 1
-
         self.model = Generator(
             z_dim=512,
             c_dim=0,
@@ -1211,7 +1209,6 @@ class MAT(nn.Module):
             img_resolution=512,
             img_channels=3,
         )
-        # [1., 512]
         self.z_dim: int = self.model.z_dim
         self.c_dim: int = self.model.c_dim
 
@@ -1247,51 +1244,28 @@ class MAT(nn.Module):
 
         mod_pad_h: int = (512 - h % 512) % 512
         mod_pad_w: int = (512 - w % 512) % 512
-        # print(x.shape)
-        # print(f"pad: {mod_pad_h}, {mod_pad_w}")
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "constant")
-        # print(x.shape)
-        mask = F.pad(mask, (0, mod_pad_w, 0, mod_pad_h), "constant")
+        if mod_pad_h or mod_pad_w:
+            x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "constant", 0).contiguous()
+            mask = F.pad(mask, (0, mod_pad_w, 0, mod_pad_h), "constant", 0).contiguous()
 
-        # print(f"h, w: {h}, {w}")
-
-        # no Labels.
-        label = torch.zeros([1, self.c_dim], device=x.device, dtype=x.dtype)
-        z: Tensor = torch.from_numpy(
-            np.random.randn(1, self.z_dim)
-        ).to(device=x.device, dtype=x.dtype)
-
-        out: Tensor = self.model(
-            x, mask, z, label, truncation_psi=1., noise_mode="none"
+        device: str = x.device
+        dtype: torch.dtype = x.dtype
+        label = torch.zeros([1, self.c_dim], device=device, dtype=dtype)
+        z: Tensor = (
+            torch.from_numpy(np.random.randn(1, self.z_dim))
+            .to(device=device, dtype=dtype)
         )
 
-        out = out[:, :, :h, :w]
+        out: Tensor = self.model(
+            x,
+            mask,
+            z,
+            label,
+            truncation_psi=1.,
+            noise_mode="none"
+        )
+
+        if mod_pad_h or mod_pad_w:
+            out = out[:, :, :h, :w]
         return out * 0.5 + 0.5
 
-
-
-
-
-
-
-# if __name__ == '__main__':
-#     device = torch.device('cuda:0')
-#     batch = 1
-#     res = 512
-#     G = Generator(z_dim=512, c_dim=0, w_dim=512, img_resolution=512, img_channels=3).to(device)
-#     D = Discriminator(c_dim=0, img_resolution=res, img_channels=3).to(device)
-#     img = torch.randn(batch, 3, res, res).to(device)
-#     mask = torch.randn(batch, 1, res, res).to(device)
-#     z = torch.randn(batch, 512).to(device)
-#     G.eval()
-
-#     # def count(block):
-#     #     return sum(p.numel() for p in block.parameters()) / 10 ** 6
-#     # print('Generator', count(G))
-#     # print('discriminator', count(D))
-
-#     with torch.no_grad():
-#         img, img_stg1 = G(img, mask, z, None, return_stg1=True)
-#     print('output of G:', img.shape, img_stg1.shape)
-#     score, score_stg1 = D(img, mask, img_stg1, None)
-#     print('output of D:', score.shape, score_stg1.shape)

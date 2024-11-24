@@ -13,7 +13,7 @@ import warnings
 import numpy as np
 import torch
 from torch import Tensor
-import traceback
+# import traceback
 
 from .custom_ops import get_plugin
 from .util import EasyDict
@@ -129,8 +129,8 @@ def _bias_act_ref(
 ):
     """Slow reference implementation of `bias_act()` using standard TensorFlow ops.
     """
-    assert isinstance(x, torch.Tensor)
-    assert clamp is None or clamp >= 0
+    # assert isinstance(x, torch.Tensor)
+    # assert clamp is None or clamp >= 0
     spec = activation_funcs[act]
     alpha = float(alpha if alpha is not None else spec.def_alpha)
     gain = float(gain if gain is not None else spec.def_gain)
@@ -164,6 +164,7 @@ _bias_act_cuda_cache = dict()
 def _bias_act_cuda(dim=1, act='linear', alpha=None, gain=None, clamp=None):
     """Fast CUDA implementation of `bias_act()` using custom ops.
     """
+    raise ValueError ("don't use this")
     # Parse arguments.
     assert clamp is None or clamp >= 0
     spec = activation_funcs[act]

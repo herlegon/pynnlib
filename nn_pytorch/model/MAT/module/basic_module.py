@@ -88,10 +88,7 @@ class Conv2dLayer(nn.Module):
         self.weight_gain = 1 / np.sqrt(in_channels * (kernel_size ** 2))
         self.act_gain = activation_funcs[activation].def_gain
 
-        weight = torch.randn(
-            [out_channels, in_channels, kernel_size, kernel_size],
-            dtype=torch.float32
-        )
+        weight = torch.randn([out_channels, in_channels, kernel_size, kernel_size])
         bias = torch.zeros([out_channels]) if bias else None
         if trainable:
             self.weight = torch.nn.Parameter(weight)
@@ -159,7 +156,7 @@ class ModulatedConv2d(nn.Module):
         weight = self.weight.to(dtype=x.dtype) * self.weight_gain * style
 
         if self.demodulate:
-            decoefs = (weight.pow(2).sum(dim=[2, 3, 4]) + torch.finfo(x.dtype).eps).rsqrt()
+            decoefs = (weight.pow(2).sum(dim=[2, 3, 4]) + 1e-8).rsqrt()
             weight = weight * decoefs.view(batch, self.out_channels, 1, 1, 1)
 
         weight = weight.view(
@@ -228,7 +225,6 @@ class StyleConv(torch.nn.Module):
         gain=1
     ):
         x = self.conv(x, style)
-
         if self.use_noise:
             if noise_mode == 'random':
                 xh, xw = x.size()[-2:]

@@ -24,11 +24,11 @@ import torch
 from torch import Tensor
 
 # Context manager to suppress known warnings in torch.jit.trace().
-class suppress_tracer_warnings(warnings.catch_warnings):
-    def __enter__(self):
-        super().__enter__()
-        warnings.simplefilter('ignore', category=torch.jit.TracerWarning)
-        return self
+# class suppress_tracer_warnings(warnings.catch_warnings):
+#     def __enter__(self):
+#         super().__enter__()
+#         warnings.simplefilter('ignore', category=torch.jit.TracerWarning)
+#         return self
 
 
 #----------------------------------------------------------------------------

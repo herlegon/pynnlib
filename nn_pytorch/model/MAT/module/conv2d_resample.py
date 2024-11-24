@@ -16,12 +16,14 @@ from .upfirdn2d import (
     _get_filter_size,
     upfirdn2d
 )
-from .util import assert_shape, suppress_tracer_warnings
-from .conv2d_gradfix import conv_transpose2d, conv2d
+# from .util import assert_shape, suppress_tracer_warnings
+# from .conv2d_gradfix import conv_transpose2d, conv2d
+from torch import conv2d, conv_transpose2d
+
 
 def _get_weight_shape(w: Tensor):
-    with suppress_tracer_warnings(): # this value will be treated as a constant
-        shape = [int(sz) for sz in w.shape]
+    # with suppress_tracer_warnings(): # this value will be treated as a constant
+    shape = [int(sz) for sz in w.shape]
     # assert_shape(w, shape)
     return shape
 

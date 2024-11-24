@@ -180,6 +180,14 @@ Fallback to float if the execution provider does not support it
         help="Used to debug"
     )
 
+    parser.add_argument(
+        "--profiling",
+        action="store_true",
+        required=False,
+        help="for profiling"
+    )
+
+
     arguments = parser.parse_args()
 
     if arguments.debug:
@@ -289,8 +297,15 @@ Fallback to float if the execution provider does not support it
     if inferences > 1:
         print(lightcyan(f"Repeat inference"), inferences, lightcyan("times"))
 
+    if arguments.profiling:
+        print("start", flush=True)
+        time.sleep(3)
+
+
     start_time= time.time()
     for _ in range(inferences):
+        # in_img = in_img[:1024,:1024,:]
+        # in_mask = in_mask[:1024,:1024]
         out_img: np.ndarray = session.process(in_img, in_mask)
     elapsed = time.time() - start_time
 
@@ -300,6 +315,8 @@ Fallback to float if the execution provider does not support it
     else:
         print(lightcyan(f"Inference:"), yellow(f"{1000 * elapsed:.1f}ms"))
 
+    if arguments.profiling:
+        return
     # Save image
     try:
         write_image(out_img_fp, out_img)
