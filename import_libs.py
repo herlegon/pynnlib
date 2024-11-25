@@ -6,7 +6,6 @@ try:
     nnlogger.debug("[V] Try loading tensorrt package")
     import tensorrt as trt
     import sys
-    # pprint(sys.modules.keys())
     modules = set(sys.modules) & set(globals())
     module_names = [sys.modules[m] for m in modules]
     if 'tensorrt' in module_names:

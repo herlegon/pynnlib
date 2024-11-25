@@ -131,7 +131,7 @@ class PyTorchSession(GenericSession):
 
 
     @torch.inference_mode()
-    def _torch_process_inpaint(self, in_img: np.ndarray, in_img2: np.ndarray, trace: bool = True) -> np.ndarray:
+    def _torch_process_inpaint(self, in_img: np.ndarray, in_mask: np.ndarray, trace: bool = True) -> np.ndarray:
         # Used for inpaiting
         in_tensor = torch.from_numpy(np.ascontiguousarray(in_img))
         in_tensor = in_tensor.to(self.device, dtype=torch.float32)
@@ -139,16 +139,16 @@ class PyTorchSession(GenericSession):
         in_tensor = flip_r_b_channels(in_tensor)
         in_tensor = to_nchw(in_tensor).contiguous()
 
-        if len(in_img2.shape) > 2:
-            gray = cv2.cvtColor(in_img2, cv2.COLOR_BGR2GRAY)
-            _, in_img2 = cv2.threshold(gray, 0.5, 1., cv2.THRESH_BINARY)
+        if len(in_mask.shape) > 2:
+            gray = cv2.cvtColor(in_mask, cv2.COLOR_BGR2GRAY)
+            _, in_mask = cv2.threshold(gray, 0.5, 1., cv2.THRESH_BINARY)
 
-        in_tensor2 = torch.from_numpy(np.ascontiguousarray(in_img2))
-        in_tensor2 = in_tensor2.to(self.device, dtype=torch.float32)
-        in_tensor2 = in_tensor2.half() if self.fp16 else in_tensor2.float()
-        in_tensor2 = to_nchw(in_tensor2).contiguous()
+        in_tensor_mask = torch.from_numpy(np.ascontiguousarray(in_mask))
+        in_tensor_mask = in_tensor_mask.to(self.device, dtype=torch.float32)
+        in_tensor_mask = in_tensor_mask.half() if self.fp16 else in_tensor_mask.float()
+        in_tensor_mask = to_nchw(in_tensor_mask).contiguous()
 
-        out_tensor: Tensor = self.module(in_tensor, in_tensor2)
+        out_tensor: Tensor = self.module(in_tensor, in_tensor_mask)
         out_tensor = torch.clamp_(out_tensor, 0, 1)
 
         out_tensor = to_hwc(out_tensor)
