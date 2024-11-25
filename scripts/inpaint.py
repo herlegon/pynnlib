@@ -50,7 +50,7 @@ def convert_to_tensorrt(
     # Shape strategy
     shape_strategy: ShapeStrategy = ShapeStrategy()
     def _str_to_size(size_str: str) -> tuple[int, int] | None:
-        if (match := re.match(re.compile("^(\d+)x(\d+)$"), size_str)):
+        if (match := re.match(re.compile(r"^(\d+)x(\d+)$"), size_str)):
             return (int(match.group(1)), int(match.group(2)))
         return None
 
@@ -316,27 +316,28 @@ Fallback to float if the execution provider does not support it
 
 
     # Convert to tensorRT
-    fp16 = False
-    print(f"[V] Convert {model.filepath} to ONNX (fp16={fp16}): ")
-    start_time = time.time()
-    onnx_model = nnlib.convert_to_onnx(
-        model=model,
-        opset=20,
-        fp16=fp16,
-        static=False,
-        device=device_for_parse,
-        out_dir=path_split(model.filepath)[0],
-    )
-    elapsed_time = time.time() - start_time
-    print(lightgreen(f"[I] Onnx model saved as {onnx_model.filepath}"))
-    print(f"[V] Converted in {elapsed_time:.2f}s")
-    print(onnx_model)
+    if False:
+        fp16 = False
+        print(f"[V] Convert {model.filepath} to ONNX (fp16={fp16}): ")
+        start_time = time.time()
+        onnx_model = nnlib.convert_to_onnx(
+            model=model,
+            opset=20,
+            fp16=fp16,
+            static=False,
+            device=device_for_parse,
+            out_dir=path_split(model.filepath)[0],
+        )
+        elapsed_time = time.time() - start_time
+        print(lightgreen(f"[I] Onnx model saved as {onnx_model.filepath}"))
+        print(f"[V] Converted in {elapsed_time:.2f}s")
+        print(onnx_model)
 
-    print(f"[V] Convert {model.filepath} to TensorRT (fp16={fp16}): ")
-    start_time = time.time()
-    trt_model = convert_to_tensorrt(
-        arguments, model=model, device=device, fp16=fp16,
-    )
+        print(f"[V] Convert {model.filepath} to TensorRT (fp16={fp16}): ")
+        start_time = time.time()
+        trt_model = convert_to_tensorrt(
+            arguments, model=model, device=device, fp16=fp16,
+        )
 
 
     # Verify that the image is valid:

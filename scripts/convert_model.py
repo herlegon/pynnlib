@@ -36,7 +36,7 @@ def convert_to_tensorrt(
     # Shape strategy
     shape_strategy: ShapeStrategy = ShapeStrategy()
     def _str_to_size(size_str: str) -> tuple[int, int] | None:
-        if (match := re.match(re.compile("^(\d+)x(\d+)$"), size_str)):
+        if (match := re.match(re.compile(r"^(\d+)x(\d+)$"), size_str)):
             return (int(match.group(1)), int(match.group(2)))
         return None
 

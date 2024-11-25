@@ -30,10 +30,8 @@ verbosity = 'full' # Verbosity level: 'none', 'brief', 'full'
 
 def _find_compiler_bindir():
     patterns = [
-        'C:\\Program Files (x86)\\Microsoft Visual Studio\\*\\Professional\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64',
-        'C:\\Program Files (x86)\\Microsoft Visual Studio\\*\\BuildTools\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64',
-        'C:\\Program Files (x86)\\Microsoft Visual Studio\\*\\Community\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64',
-        'C:\\Program Files (x86)\\Microsoft Visual Studio *\\vc/bin',
+        'C:\\Visual_Studio\\*\\Community\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64',
+        'C:\\Visual_Studio *\\vc/bin',
     ]
     for pattern in patterns:
         matches = sorted(glob.glob(pattern))
@@ -68,8 +66,7 @@ def get_plugin(module_name, sources, **build_kwargs):
             if compiler_bindir is None:
                 raise RuntimeError(f'Could not find MSVC/GCC/CLANG installation on this computer. Check _find_compiler_bindir() in "{__file__}".')
             os.environ['PATH'] += ';' + compiler_bindir
-        else:
-            raise RuntimeError("jhihiu")
+
         # Compile and load.
         verbose_build = (verbosity == 'full')
         print("found compiler\n", flush=True)
@@ -87,10 +84,6 @@ def get_plugin(module_name, sources, **build_kwargs):
         source_dirs_set = set(os.path.dirname(source) for source in sources)
         print(source_dirs_set)
         print()
-
-        for p in os.environ['PATH'].split(";"):
-            print(p)
-
 
         # os.environ['TORCH_EXTENSIONS_DIR'] = os.path.abspath(os.path.dirname(__file__))
         # print(f"env: {os.environ['TORCH_EXTENSIONS_DIR']}")

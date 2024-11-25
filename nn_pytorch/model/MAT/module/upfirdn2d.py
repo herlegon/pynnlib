@@ -231,7 +231,6 @@ _upfirdn2d_cuda_cache = dict()
 def _upfirdn2d_cuda(up=1, down=1, padding=0, flip_filter=False, gain=1):
     """Fast CUDA implementation of `upfirdn2d()` using custom ops.
     """
-    raise ValueError("don't use this")
     # Parse arguments.
     upx, upy = _parse_scaling(up)
     downx, downy = _parse_scaling(down)
@@ -251,6 +250,7 @@ def _upfirdn2d_cuda(up=1, down=1, padding=0, flip_filter=False, gain=1):
                 f = torch.ones([1, 1], dtype=torch.float32, device=x.device)
             # assert isinstance(f, torch.Tensor) and f.ndim in [1, 2]
             y = x
+            print(f.dtype)
             if f.ndim == 2:
                 y = _plugin.upfirdn2d(y, f, upx, upy, downx, downy, padx0, padx1, pady0, pady1, flip_filter, gain)
             else:

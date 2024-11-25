@@ -18,7 +18,7 @@ static torch::Tensor upfirdn2d(torch::Tensor x, torch::Tensor f, int upx, int up
     // Validate arguments.
     TORCH_CHECK(x.is_cuda(), "x must reside on CUDA device");
     TORCH_CHECK(f.device() == x.device(), "f must reside on the same device as x");
-    TORCH_CHECK(f.dtype() == torch::kFloat, "f must be float32");
+    // TORCH_CHECK(f.dtype() == torch::kFloat, "f must be float32");
     TORCH_CHECK(x.numel() <= INT_MAX, "x is too large");
     TORCH_CHECK(f.numel() <= INT_MAX, "f is too large");
     TORCH_CHECK(x.dim() == 4, "x must be rank 4");
