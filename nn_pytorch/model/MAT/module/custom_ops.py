@@ -8,6 +8,7 @@
 
 import os
 import glob
+from pprint import pprint
 import torch
 import torch.utils.cpp_extension
 import importlib
@@ -17,20 +18,22 @@ from pathlib import Path
 
 from torch.utils.file_baton import FileBaton
 
+from utils.p_print import *
+
 #----------------------------------------------------------------------------
 # Global options.
 
-verbosity = 'brief' # Verbosity level: 'none', 'brief', 'full'
+verbosity = 'full' # Verbosity level: 'none', 'brief', 'full'
 
 #----------------------------------------------------------------------------
 # Internal helper funcs.
 
 def _find_compiler_bindir():
     patterns = [
-        'C:/Program Files (x86)/Microsoft Visual Studio/*/Professional/VC/Tools/MSVC/*/bin/Hostx64/x64',
-        'C:/Program Files (x86)/Microsoft Visual Studio/*/BuildTools/VC/Tools/MSVC/*/bin/Hostx64/x64',
-        'C:/Program Files (x86)/Microsoft Visual Studio/*/Community/VC/Tools/MSVC/*/bin/Hostx64/x64',
-        'C:/Program Files (x86)/Microsoft Visual Studio */vc/bin',
+        'C:\\Program Files (x86)\\Microsoft Visual Studio\\*\\Professional\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64',
+        'C:\\Program Files (x86)\\Microsoft Visual Studio\\*\\BuildTools\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64',
+        'C:\\Program Files (x86)\\Microsoft Visual Studio\\*\\Community\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64',
+        'C:\\Program Files (x86)\\Microsoft Visual Studio *\\vc/bin',
     ]
     for pattern in patterns:
         matches = sorted(glob.glob(pattern))
@@ -50,6 +53,8 @@ def get_plugin(module_name, sources, **build_kwargs):
     if module_name in _cached_plugins:
         return _cached_plugins[module_name]
 
+    print()
+
     # Print status.
     if verbosity == 'full':
         print(f'Setting up PyTorch plugin "{module_name}"...')
@@ -63,9 +68,11 @@ def get_plugin(module_name, sources, **build_kwargs):
             if compiler_bindir is None:
                 raise RuntimeError(f'Could not find MSVC/GCC/CLANG installation on this computer. Check _find_compiler_bindir() in "{__file__}".')
             os.environ['PATH'] += ';' + compiler_bindir
-
+        else:
+            raise RuntimeError("jhihiu")
         # Compile and load.
         verbose_build = (verbosity == 'full')
+        print("found compiler\n", flush=True)
 
         # Incremental build md5sum trickery.  Copies all the input source files
         # into a cached build directory under a combined md5 digest of the input
@@ -78,20 +85,37 @@ def get_plugin(module_name, sources, **build_kwargs):
         # environment variable is set (we take this as a signal that the user
         # actually cares about this.)
         source_dirs_set = set(os.path.dirname(source) for source in sources)
+        print(source_dirs_set)
+        print()
+
+        for p in os.environ['PATH'].split(";"):
+            print(p)
+
+
+        # os.environ['TORCH_EXTENSIONS_DIR'] = os.path.abspath(os.path.dirname(__file__))
+        # print(f"env: {os.environ['TORCH_EXTENSIONS_DIR']}")
+
         if len(source_dirs_set) == 1 and ('TORCH_EXTENSIONS_DIR' in os.environ):
             all_source_files = sorted(list(x for x in Path(list(source_dirs_set)[0]).iterdir() if x.is_file()))
+            print("\nall source files")
+            print(all_source_files)
 
             # Compute a combined hash digest for all source files in the same
             # custom op directory (usually .cu, .cpp, .py and .h files).
             hash_md5 = hashlib.md5()
+            print(yellow("hash_md5"), flush=True)
             for src in all_source_files:
                 with open(src, 'rb') as f:
                     hash_md5.update(f.read())
-            build_dir = torch.utils.cpp_extension._get_build_directory(module_name, verbose=verbose_build) # pylint: disable=protected-access
+            build_dir = torch.utils.cpp_extension._get_build_directory(
+                module_name, verbose=verbose_build
+            )
+            print(yellow(f"build dir: {build_dir}"))
             digest_build_dir = os.path.join(build_dir, hash_md5.hexdigest())
 
             if not os.path.isdir(digest_build_dir):
                 os.makedirs(digest_build_dir, exist_ok=True)
+                print(yellow("baton"), flush=True)
                 baton = FileBaton(os.path.join(digest_build_dir, 'lock'))
                 if baton.try_acquire():
                     try:
@@ -107,7 +131,13 @@ def get_plugin(module_name, sources, **build_kwargs):
             torch.utils.cpp_extension.load(name=module_name, build_directory=build_dir,
                 verbose=verbose_build, sources=digest_sources, **build_kwargs)
         else:
-            torch.utils.cpp_extension.load(name=module_name, verbose=verbose_build, sources=sources, **build_kwargs)
+            print(yellow("torch.utils.cpp_extension.load"))
+            torch.utils.cpp_extension.load(
+                name=module_name,
+                verbose=verbose_build,
+                sources=sources,
+                **build_kwargs
+            )
         module = importlib.import_module(module_name)
 
     except:

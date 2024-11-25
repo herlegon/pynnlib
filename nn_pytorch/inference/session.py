@@ -100,7 +100,7 @@ class PyTorchSession(GenericSession):
             for _ in range(self.model.arch.infer_type.inputs)
         ])
         for _ in range(count):
-            self._process_fct(*imgs, trace=False)
+            self._process_fct(*imgs)
 
 
     def process(self, in_img: np.ndarray, *args, **kwargs) -> np.ndarray:
@@ -131,7 +131,7 @@ class PyTorchSession(GenericSession):
 
 
     @torch.inference_mode()
-    def _torch_process_inpaint(self, in_img: np.ndarray, in_mask: np.ndarray, trace: bool = True) -> np.ndarray:
+    def _torch_process_inpaint(self, in_img: np.ndarray, in_mask: np.ndarray) -> np.ndarray:
         # Used for inpaiting
         in_tensor = torch.from_numpy(np.ascontiguousarray(in_img))
         in_tensor = in_tensor.to(self.device, dtype=torch.float32)

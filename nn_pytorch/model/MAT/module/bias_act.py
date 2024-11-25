@@ -13,7 +13,7 @@ import warnings
 import numpy as np
 import torch
 from torch import Tensor
-# import traceback
+import traceback
 
 from .custom_ops import get_plugin
 from .util import EasyDict
@@ -65,6 +65,7 @@ def _init():
             _plugin = get_plugin('bias_act_plugin', sources=sources, extra_cuda_cflags=['--use_fast_math'])
         except:
             warnings.warn('Failed to build CUDA kernels for bias_act. Falling back to slow reference implementation. Details:\n\n' + traceback.format_exc())
+            raise
     return _plugin is not None
 
 
@@ -111,7 +112,9 @@ def bias_act(
     # assert isinstance(x, torch.Tensor)
     # assert impl in ['ref', 'cuda']
     # if impl == 'cuda' and x.device.type == 'cuda' and _init():
-    #     return _bias_act_cuda(dim=dim, act=act, alpha=alpha, gain=gain, clamp=clamp).apply(x, b)
+    #     return _bias_act_cuda(
+    #         dim=dim, act=act, alpha=alpha, gain=gain, clamp=clamp
+    #     ).apply(x, b)
     return _bias_act_ref(
         x=x, b=b, dim=dim, act=act, alpha=alpha, gain=gain, clamp=clamp
     )
@@ -138,9 +141,9 @@ def _bias_act_ref(
 
     # Add bias.
     if b is not None:
-        assert isinstance(b, torch.Tensor) and b.ndim == 1
-        assert 0 <= dim < x.ndim
-        assert b.shape[0] == x.shape[dim]
+        # assert isinstance(b, torch.Tensor) and b.ndim == 1
+        # assert 0 <= dim < x.ndim
+        # assert b.shape[0] == x.shape[dim]
         x = x + b.reshape([-1 if i == dim else 1 for i in range(x.ndim)])
 
     # Evaluate activation function.
@@ -164,7 +167,6 @@ _bias_act_cuda_cache = dict()
 def _bias_act_cuda(dim=1, act='linear', alpha=None, gain=None, clamp=None):
     """Fast CUDA implementation of `bias_act()` using custom ops.
     """
-    raise ValueError ("don't use this")
     # Parse arguments.
     assert clamp is None or clamp >= 0
     spec = activation_funcs[act]
