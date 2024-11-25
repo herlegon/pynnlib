@@ -3,9 +3,11 @@ import logging
 import logging.config
 import os
 from pathlib import Path
+import re
 import signal
 import sys
 import time
+from typing import Any
 import cv2
 import numpy as np
 
@@ -26,9 +28,72 @@ from pynnlib import (
     is_cuda_available,
     NnModelSession,
     NnFrameworkType,
+    ShapeStrategy,
+    TrtModel
 )
 from pynnlib.utils import absolute_path, path_split
 from pynnlib.utils.p_print import *
+
+
+
+
+
+def convert_to_tensorrt(
+    arguments: Any,
+    model: NnModel,
+    device: str,
+    fp16: bool,
+    bf16: bool=False,
+) -> TrtModel | None:
+    trt_model: TrtModel | None = None
+
+    # Shape strategy
+    shape_strategy: ShapeStrategy = ShapeStrategy()
+    def _str_to_size(size_str: str) -> tuple[int, int] | None:
+        if (match := re.match(re.compile("^(\d+)x(\d+)$"), size_str)):
+            return (int(match.group(1)), int(match.group(2)))
+        return None
+
+    opt_size = _str_to_size(arguments.opt_size)
+    if opt_size is None:
+        sys.exit(red(f"[E] Erroneous option: {arguments.opt_size}"))
+    shape_strategy.opt_size = opt_size
+
+    if not arguments.fixed_size:
+        min_size = _str_to_size(arguments.min_size)
+        if min_size is None:
+            sys.exit(red(f"[E] Erroneous option: {arguments.min_size}"))
+        shape_strategy.min_size = min_size
+
+        max_size = _str_to_size(arguments.max_size)
+        if max_size is None:
+            sys.exit(red(f"[E] Erroneous option: {arguments.max_size}"))
+        shape_strategy.max_size = max_size
+
+    else:
+        shape_strategy.min_size = shape_strategy.opt_size
+        shape_strategy.max_size = shape_strategy.opt_size
+
+    if not shape_strategy.is_valid():
+        sys.exit(red(f"[E] Erroneous sizes"))
+
+    # Optimization
+    opt_level = arguments.opt_level
+    opt_level = None if not 1 <= opt_level <= 5 else opt_level
+
+    trt_model: TrtModel = nnlib.convert_to_tensorrt(
+        model=model,
+        shape_strategy=shape_strategy,
+        fp16=fp16,
+        bf16=bf16,
+        tf32=False,
+        optimization_level=opt_level,
+        opset=arguments.opset,
+        device=device,
+        out_dir=path_split(model.filepath)[0],
+    )
+
+    return trt_model
 
 
 
@@ -248,6 +313,31 @@ Fallback to float if the execution provider does not support it
     )
     if arguments.verbose:
         print(model)
+
+
+    # Convert to tensorRT
+    fp16 = False
+    print(f"[V] Convert {model.filepath} to ONNX (fp16={fp16}): ")
+    start_time = time.time()
+    onnx_model = nnlib.convert_to_onnx(
+        model=model,
+        opset=20,
+        fp16=fp16,
+        static=False,
+        device=device_for_parse,
+        out_dir=path_split(model.filepath)[0],
+    )
+    elapsed_time = time.time() - start_time
+    print(lightgreen(f"[I] Onnx model saved as {onnx_model.filepath}"))
+    print(f"[V] Converted in {elapsed_time:.2f}s")
+    print(onnx_model)
+
+    print(f"[V] Convert {model.filepath} to TensorRT (fp16={fp16}): ")
+    start_time = time.time()
+    trt_model = convert_to_tensorrt(
+        arguments, model=model, device=device, fp16=fp16,
+    )
+
 
     # Verify that the image is valid:
     if not model.is_size_valid(in_img.shape):

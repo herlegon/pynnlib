@@ -138,7 +138,7 @@ def main():
         "--opset",
         type=int,
         required=False,
-        default=17,
+        default=20,
         help="""Onnx opset version. Used when converting a PyTorch Model to onnx/tensorrt.
 \n"""
     )
