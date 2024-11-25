@@ -1,12 +1,11 @@
 from __future__ import annotations
 from collections.abc import Callable
-import time
+import cv2
 import numpy as np
-from pprint import pprint
 import torch
 import torch.nn as nn
 from torch import Tensor
-from viztracer import VizTracer, log_sparse, trace_and_save
+from typing import TYPE_CHECKING
 from pynnlib import is_cuda_available
 from pynnlib.logger import nnlogger
 from pynnlib.model import PytorchModel
@@ -18,8 +17,6 @@ from pynnlib.utils.torch_tensor import (
     to_hwc
 )
 from ..torch_types import TorchNnModule
-
-from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from pynnlib.architecture import InferType
 
@@ -77,7 +74,7 @@ class PyTorchSession(GenericSession):
 
         nnlogger.debug(f"[V] Initialize a PyTorch inference session fp16={self.fp16}")
         torch.backends.cudnn.enabled = True
-        # torch.backends.cudnn.benchmark = False
+
         module.eval()
         for param in module.parameters():
             param.requires_grad = False
@@ -143,7 +140,9 @@ class PyTorchSession(GenericSession):
         in_tensor = to_nchw(in_tensor).contiguous()
 
         if len(in_img2.shape) > 2:
-            in_img2 = in_img2[:,:,0]
+            gray = cv2.cvtColor(in_img2, cv2.COLOR_BGR2GRAY)
+            _, in_img2 = cv2.threshold(gray, 0.5, 1., cv2.THRESH_BINARY)
+
         in_tensor2 = torch.from_numpy(np.ascontiguousarray(in_img2))
         in_tensor2 = in_tensor2.to(self.device, dtype=torch.float32)
         in_tensor2 = in_tensor2.half() if self.fp16 else in_tensor2.float()
