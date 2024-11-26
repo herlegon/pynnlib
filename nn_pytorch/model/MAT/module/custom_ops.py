@@ -9,6 +9,7 @@
 import os
 import glob
 from pprint import pprint
+import sys
 import torch
 import torch.utils.cpp_extension
 import importlib
@@ -43,9 +44,24 @@ def _find_compiler_bindir():
 # Main entry point for compiling and loading C++/CUDA plugins.
 
 _cached_plugins = dict()
+os.environ['TORCH_CUDA_ARCH_LIST'] = '8.9'
 
 def get_plugin(module_name, sources, **build_kwargs):
     assert verbosity in ['none', 'brief', 'full']
+
+    # Already cached?
+    if module_name in _cached_plugins:
+        return _cached_plugins[module_name]
+
+    modules = {
+        'bias_act_plugin': "bias_act_plugin",
+        'upfirdn2d_plugin': "upfirdn2d_plugin",
+    }
+    for _name, _dir in modules.items():
+        sys.path.append(_dir)
+        if os.path.exists(_dir):
+           _cached_plugins[_name] = importlib.import_module(_name)
+
 
     # Already cached?
     if module_name in _cached_plugins:
@@ -131,6 +147,7 @@ def get_plugin(module_name, sources, **build_kwargs):
                 sources=sources,
                 **build_kwargs
             )
+        print(f"load {module_name}")
         module = importlib.import_module(module_name)
 
     except:

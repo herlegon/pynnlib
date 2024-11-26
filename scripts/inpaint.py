@@ -36,8 +36,6 @@ from pynnlib.utils.p_print import *
 
 
 
-
-
 def convert_to_tensorrt(
     arguments: Any,
     model: NnModel,

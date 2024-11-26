@@ -127,7 +127,7 @@ def setup_filter(
 
 
 def upfirdn2d(
-    x: Any,
+    x: Tensor,
     f: Tensor,
     up: int = 1,
     down: int = 1,
@@ -177,8 +177,14 @@ def upfirdn2d(
     """
     # assert isinstance(x, torch.Tensor)
     # assert impl in ['ref', 'cuda']
-    # if impl == 'cuda' and x.device.type == 'cuda' and _init():
-    #     return _upfirdn2d_cuda(up=up, down=down, padding=padding, flip_filter=flip_filter, gain=gain).apply(x, f)
+    if impl == 'cuda' and x.device.type == 'cuda' and _init():
+        # print(f"x: {x.dtype}")
+        # print(f"f: {f.dtype}")
+        # if f.dtype == torch.float16:
+        #     raise
+        return _upfirdn2d_cuda(
+            up=up, down=down, padding=padding, flip_filter=flip_filter, gain=gain
+        ).apply(x, f.to(torch.float32))
     return _upfirdn2d_ref(x, f, up=up, down=down, padding=padding, flip_filter=flip_filter, gain=gain)
 
 
@@ -250,7 +256,7 @@ def _upfirdn2d_cuda(up=1, down=1, padding=0, flip_filter=False, gain=1):
                 f = torch.ones([1, 1], dtype=torch.float32, device=x.device)
             # assert isinstance(f, torch.Tensor) and f.ndim in [1, 2]
             y = x
-            print(f.dtype)
+            # print(f.dtype)
             if f.ndim == 2:
                 y = _plugin.upfirdn2d(y, f, upx, upy, downx, downy, padx0, padx1, pady0, pady1, flip_filter, gain)
             else:

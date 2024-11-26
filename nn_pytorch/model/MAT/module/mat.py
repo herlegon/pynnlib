@@ -1214,39 +1214,20 @@ class MAT(nn.Module):
 
 
     def forward(self, x: Tensor, mask: Tensor) -> Tensor:
-        """Input images and output images have same size
-        images: [H, W, C] RGB
-        masks: [H, W] mask area == 255
-        return: BGR IMAGE
-        """
-        # print("devices")
-        # print(x.device)
-        # print(mask.device)
-        # print("dtypes")
-        # print(x.dtype)
-        # print(mask.dtype)
-        # print(f"mask: {mask.shape}")
-        # print(torch.finfo(torch.float16).eps)
-        # print(torch.finfo(torch.float32).eps)
+        # Pad both img and mask
+        # n, w, h, c
+        # w = x.shape[3] if x.shape[1] <= 3 else x.shape[1]
+        # n, c, h, w
+        h, w = x.shape[2:]
 
-        # print(torch.finfo(torch.float16).smallest_normal)
-        # print(torch.finfo(torch.float32).smallest_normal)
+        mod_pad_h: int = (512 - h % 512) % 512
+        mod_pad_w: int = (512 - w % 512) % 512
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "constant", 0).contiguous()
+        mask = F.pad(mask, (0, mod_pad_w, 0, mod_pad_h), "constant", 0).contiguous()
 
         # [0, 1] -> [-1, 1]
         x = x * 2 - 1
         mask = 1 - mask
-
-        # Pad both img and mask
-        # n, c, h, w
-        # n, w, h, c
-        w = x.shape[3] if x.shape[1] <= 3 else x.shape[1]
-        h = x.shape[2]
-
-        mod_pad_h: int = (512 - h % 512) % 512
-        mod_pad_w: int = (512 - w % 512) % 512
-        if mod_pad_h or mod_pad_w:
-            x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "constant", 0).contiguous()
-            mask = F.pad(mask, (0, mod_pad_w, 0, mod_pad_h), "constant", 0).contiguous()
 
         device: str = x.device
         dtype: torch.dtype = x.dtype
@@ -1267,5 +1248,5 @@ class MAT(nn.Module):
 
         if mod_pad_h or mod_pad_w:
             out = out[:, :, :h, :w]
-        return out * 0.5 + 0.5
+        return (out + 1) / 2
 

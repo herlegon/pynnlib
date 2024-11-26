@@ -100,6 +100,7 @@ class Conv2dLayer(nn.Module):
             else:
                 self.bias = None
 
+
     def forward(self, x: Tensor, gain: int = 1) -> Tensor:
         w: Tensor = self.weight.to(dtype=x.dtype) * self.weight_gain
         x = conv2d_resample(
