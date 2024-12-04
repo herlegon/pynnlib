@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
 from torch import Tensor
-from timm.models.layers import to_2tuple
+from timm.layers import to_2tuple
 
 from .basic_module import (
     FullyConnectedLayer,

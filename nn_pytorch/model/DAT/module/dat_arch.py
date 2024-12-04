@@ -5,7 +5,7 @@ import torch.utils.checkpoint as checkpoint
 from torch import Tensor
 from torch.nn import functional as F
 
-from timm.models.layers import DropPath, trunc_normal_
+from timm.layers import DropPath, trunc_normal_
 from einops.layers.torch import Rearrange
 from einops import rearrange
 
