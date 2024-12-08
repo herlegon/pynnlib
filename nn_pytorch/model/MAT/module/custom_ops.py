@@ -46,6 +46,11 @@ def _find_compiler_bindir():
 _cached_plugins = dict()
 os.environ['TORCH_CUDA_ARCH_LIST'] = '8.9'
 
+
+# os.environ['VSCMD_ARG_TGT_ARCH'] = "x64"
+
+
+
 def get_plugin(module_name, sources, **build_kwargs):
     assert verbosity in ['none', 'brief', 'full']
 
@@ -82,10 +87,10 @@ def get_plugin(module_name, sources, **build_kwargs):
             if compiler_bindir is None:
                 raise RuntimeError(f'Could not find MSVC/GCC/CLANG installation on this computer. Check _find_compiler_bindir() in "{__file__}".')
             os.environ['PATH'] += ';' + compiler_bindir
+            print(yellow("found compiler"), compiler_bindir, flush=True)
 
         # Compile and load.
         verbose_build = (verbosity == 'full')
-        print("found compiler\n", flush=True)
 
         # Incremental build md5sum trickery.  Copies all the input source files
         # into a cached build directory under a combined md5 digest of the input
@@ -140,15 +145,20 @@ def get_plugin(module_name, sources, **build_kwargs):
             torch.utils.cpp_extension.load(name=module_name, build_directory=build_dir,
                 verbose=verbose_build, sources=digest_sources, **build_kwargs)
         else:
-            print(yellow("torch.utils.cpp_extension.load"))
-            torch.utils.cpp_extension.load(
-                name=module_name,
-                verbose=verbose_build,
-                sources=sources,
-                **build_kwargs
-            )
-        print(f"load {module_name}")
-        module = importlib.import_module(module_name)
+            try:
+                module = importlib.import_module(module_name)
+            except:
+                print(red(f"failed to load module {module_name}, compile"))
+
+                print(yellow(f"torch.utils.cpp_extension.load: {module_name}, {sources}"))
+                torch.utils.cpp_extension.load(
+                    name=module_name,
+                    verbose=verbose_build,
+                    sources=sources,
+                    **build_kwargs
+                )
+            print(f"load {module_name}")
+            module = importlib.import_module(module_name)
 
     except:
         if verbosity == 'brief':

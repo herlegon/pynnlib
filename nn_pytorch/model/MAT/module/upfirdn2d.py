@@ -33,6 +33,7 @@ def _init():
         try:
             _plugin = get_plugin('upfirdn2d_plugin', sources=sources, extra_cuda_cflags=['--use_fast_math'])
         except:
+            _plugin = get_plugin('upfirdn2d_plugin', sources=sources, extra_cuda_cflags=['--use_fast_math'])
             warnings.warn('Failed to build CUDA kernels for upfirdn2d. Falling back to slow reference implementation. Details:\n\n' + traceback.format_exc())
     return _plugin is not None
 
@@ -177,14 +178,14 @@ def upfirdn2d(
     """
     # assert isinstance(x, torch.Tensor)
     # assert impl in ['ref', 'cuda']
-    if impl == 'cuda' and x.device.type == 'cuda' and _init():
-        # print(f"x: {x.dtype}")
-        # print(f"f: {f.dtype}")
-        # if f.dtype == torch.float16:
-        #     raise
-        return _upfirdn2d_cuda(
-            up=up, down=down, padding=padding, flip_filter=flip_filter, gain=gain
-        ).apply(x, f.to(torch.float32))
+    # if impl == 'cuda' and x.device.type == 'cuda' and _init():
+    #     # print(f"x: {x.dtype}")
+    #     # print(f"f: {f.dtype}")
+    #     # if f.dtype == torch.float16:
+    #     #     raise
+    #     return _upfirdn2d_cuda(
+    #         up=up, down=down, padding=padding, flip_filter=flip_filter, gain=gain
+    #     ).apply(x, f.to(torch.float32))
     return _upfirdn2d_ref(x, f, up=up, down=down, padding=padding, flip_filter=flip_filter, gain=gain)
 
 

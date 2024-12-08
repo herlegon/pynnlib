@@ -110,6 +110,17 @@ def load_image_fp32(filepath: Path | str) -> np.ndarray:
     return img
 
 
+def load_image(filepath: Path | str) -> np.ndarray:
+    # Simplified function for testing purpose only
+    try:
+        img: np.ndarray = cv2.imdecode(
+            np.fromfile(filepath, dtype=np.uint8),
+            cv2.IMREAD_UNCHANGED
+        )
+    except Exception as e:
+        raise RuntimeError(red(type(e)))
+    return img
+
 
 def write_image(filepath: Path | str, img: np.ndarray) -> None:
     # Simplified function for testing purpose only: save as 8-bit image
@@ -271,7 +282,8 @@ Fallback to float if the execution provider does not support it
     in_mask: np.ndarray | None = None
     in_mask_fp = absolute_path(arguments.mask)
     try:
-        in_mask = load_image_fp32(in_mask_fp)
+        # in_mask = load_image_fp32(in_mask_fp)
+        in_mask = load_image(in_mask_fp)
     except:
         sys.exit(red(f"Failed to open mask: {arguments.mask}"))
 
