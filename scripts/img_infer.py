@@ -172,6 +172,13 @@ Fallback to float if the execution provider does not support it
         help="Used to debug"
     )
 
+    parser.add_argument(
+        "--profiling",
+        action="store_true",
+        required=False,
+        help="for profiling"
+    )
+
     arguments = parser.parse_args()
 
     if arguments.debug:
@@ -267,6 +274,11 @@ Fallback to float if the execution provider does not support it
     inferences: int = arguments.n
     if inferences > 1:
         print(lightcyan(f"Repeat inference"), inferences, lightcyan("times"))
+
+    if arguments.profiling:
+        print("start", flush=True)
+        time.sleep(3)
+
 
     start_time= time.time()
     for _ in range(inferences):

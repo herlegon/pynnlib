@@ -37,11 +37,18 @@ torch_to_numpy_dtype_dict.update({
 # numpy dtypes like np.float64 are not instances, but rather classes. This leads to rather absurd cases like
 # np.float64 != np.dtype("float64") but np.float64 == np.dtype("float64").type.
 # Especially when checking against a reference we can't be sure which variant we get, so we simply try both.
-def np_to_torch_dtype(np_dtype):
+def np_to_torch_dtype(np_dtype: np.dtype):
     try:
         return np_to_torch_dtype_dict[np_dtype]
     except KeyError:
         return np_to_torch_dtype_dict[np_dtype.type]
+
+
+def torch_to_np_dtype(torch_dtype: torch.dtype):
+    try:
+        return torch_to_numpy_dtype_dict[torch_dtype]
+    except KeyError:
+        raise
 
 
 
