@@ -1,4 +1,5 @@
 import sys
+import cupy as cp
 import numpy as np
 import torch
 from torch import Tensor
@@ -28,27 +29,29 @@ if sys.platform == "win32":
     np_to_torch_dtype_dict[np.intc] = torch.int
 
 # Dict of torch dtype -> NumPy dtype
-torch_to_numpy_dtype_dict = {value : key for (key, value) in np_to_torch_dtype_dict.items()}
-torch_to_numpy_dtype_dict.update({
-    torch.bfloat16: np.float32,
-    torch.complex32: np.complex64
-})
-
-# numpy dtypes like np.float64 are not instances, but rather classes. This leads to rather absurd cases like
-# np.float64 != np.dtype("float64") but np.float64 == np.dtype("float64").type.
-# Especially when checking against a reference we can't be sure which variant we get, so we simply try both.
-def np_to_torch_dtype(np_dtype: np.dtype):
-    try:
-        return np_to_torch_dtype_dict[np_dtype]
-    except KeyError:
-        return np_to_torch_dtype_dict[np_dtype.type]
+torch_to_np_dtype: dict[torch.dtype, np.dtype] = {
+    value: key
+    for (key, value) in np_to_torch_dtype_dict.items()
+}
+# np_to_torch_dtype_dict.update({
+#     torch.bfloat16: np.float32,
+#     torch.complex32: np.complex64
+# })
 
 
-def torch_to_np_dtype(torch_dtype: torch.dtype):
-    try:
-        return torch_to_numpy_dtype_dict[torch_dtype]
-    except KeyError:
-        raise
+torch_to_cp_dtype: dict[torch.dtype, cp.dtype] = {
+    torch.bool: cp.bool_,
+    torch.uint8: cp.uint8,
+    torch.int8: cp.int8,
+    torch.int16: cp.int16,
+    torch.int32: cp.int32,
+    torch.int64: cp.int64,
+    torch.float16: cp.float16,
+    torch.float32: cp.float32,
+    torch.float64: cp.float64,
+    torch.complex64: cp.complex64,
+    torch.complex128: cp.complex128,
+}
 
 
 

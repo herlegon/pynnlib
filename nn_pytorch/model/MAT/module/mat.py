@@ -115,7 +115,7 @@ class Conv2dLayerPartial(nn.Module):
                 )
                 # mask_ratio = self.slide_winsize / (update_mask + torch.finfo(x.dtype).eps)
                 mask_ratio = self.slide_winsize / (update_mask.to(torch.float32) + 1e-8)
-                update_mask = torch.clamp(update_mask, 0, 1)
+                update_mask = torch.clamp_(update_mask, 0, 1)
                 mask_ratio = torch.mul(mask_ratio, update_mask).to(x.dtype)
             x = self.conv(x)
             x = torch.mul(x, mask_ratio)
@@ -213,9 +213,9 @@ class WindowAttention(nn.Module):
                 ).masked_fill(attn_mask_windows == 1, float(0.0))
             )
             with torch.no_grad():
-                mask_windows = torch.clamp(
-                    torch.sum(mask_windows, dim=1, keepdim=True), 0, 1
-                ).repeat(1, N, 1)
+                mask_windows = torch.sum(mask_windows, dim=1, keepdim=True)
+                mask_windows = torch.clamp_(mask_windows, 0, 1)
+                mask_windows = mask_windows.repeat(1, N, 1)
 
         attn = self.softmax(attn)
         x = (attn @ v).transpose(1, 2).reshape(B_, N, C)

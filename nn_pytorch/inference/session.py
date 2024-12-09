@@ -179,7 +179,6 @@ class PyTorchSession(GenericSession):
         in_img: np.ndarray,
         in_mask: np.ndarray
     ) -> np.ndarray:
-        # Used for inpaiting
         in_tensor = torch.from_numpy(np.ascontiguousarray(in_img))
         in_tensor = in_tensor.to(self.device)
         in_tensor = in_tensor.half() if self.fp16 else in_tensor.float()
@@ -190,36 +189,19 @@ class PyTorchSession(GenericSession):
             gray = cv2.cvtColor(in_mask, cv2.COLOR_BGR2GRAY)
             _, in_mask = cv2.threshold(gray, 0.5, 1., cv2.THRESH_BINARY)
 
-        print(f"in_mask: {in_mask.shape}, {in_mask.dtype}, {in_mask.strides}")
-        print(f"    {in_mask.min()}, {in_mask.max()}")
         in_tensor_mask = torch.from_numpy(np.ascontiguousarray(in_mask))
         in_tensor_mask = in_tensor_mask.to(self.device)
-        print(f"in_tensor_mask: {in_tensor_mask.shape}, {in_tensor_mask.dtype}, {in_tensor_mask.stride()}")
-        print(f"    {in_mask.min()}, {in_mask.max()}")
-
         in_tensor_mask = in_tensor_mask.half() if self.fp16 else in_tensor_mask.float()
         in_tensor_mask = in_tensor_mask / 255.
         in_tensor_mask = to_nchw(in_tensor_mask).contiguous()
 
-        print(f"in_tensor: {in_tensor.shape}, {in_tensor.dtype}, {in_tensor.stride()}")
-        print(f"mask_tensor: {in_tensor_mask.shape}, {in_tensor_mask.dtype}, {in_tensor_mask.stride()}")
-        print(f"    {in_tensor_mask.min()}, {in_tensor_mask.max()}")
-
         out_tensor: Tensor = self.module(in_tensor, in_tensor_mask)
         out_tensor = torch.clamp_(out_tensor, 0, 1)
-
-        print(f"out_tensor: {out_tensor.shape}, {out_tensor.dtype}, {out_tensor.stride()}")
-        capsule = to_dlpack(out_tensor)
-        pprint(capsule)
-        cp_out_tensor = cp.from_dlpack(capsule)
-        print(f"cp_out_tensor: {cp_out_tensor.shape}, {cp_out_tensor.dtype}")
 
         out_tensor = to_hwc(out_tensor)
         out_tensor = flip_r_b_channels(out_tensor)
         out_tensor = out_tensor.float()
         out_img: np.ndarray = out_tensor.detach().cpu().numpy()
-
-        print(f"out_img: {out_img.shape}, {out_img.dtype}, {out_img.strides}")
 
         return out_img
 
