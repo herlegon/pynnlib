@@ -62,7 +62,7 @@ def basename_to_config(
     if (
         match := re.match(
             re.compile(
-                ".*_cc(\d+.\d+)_([bfp1236_]+)_op(\d{1,2})_(\d+x\d+)_(\d+x\d+)_(\d+x\d+)_(\d+\.\d+\.\d+)$"
+                r".*_cc(\d+.\d+)_([bfp1236_]+)_op(\d{1,2})_(\d+x\d+)_(\d+x\d+)_(\d+x\d+)_(\d+\.\d+\.\d+)$"
             ),
             basename
         )
