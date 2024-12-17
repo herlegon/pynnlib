@@ -9,9 +9,9 @@ from pynnlib.logger import nnlogger
 from pynnlib.model import TrtModel
 from pynnlib.session import GenericSession, set_cuda_device
 from pynnlib.utils.torch_tensor import (
-    flip_r_b_channels,
-    to_nchw,
-    to_hwc,
+    flip_r_b_channels_torch,
+    to_nchw_torch,
+    to_hwc_torch,
 )
 
 

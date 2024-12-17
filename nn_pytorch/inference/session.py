@@ -14,9 +14,9 @@ from pynnlib.model import PytorchModel
 from pynnlib.architecture import SizeConstraint
 from pynnlib.session import GenericSession
 from pynnlib.utils.torch_tensor import (
-    to_nchw,
-    flip_r_b_channels,
-    to_hwc
+    to_nchw_torch,
+    flip_r_b_channels_torch,
+    to_hwc_torch
 )
 from ..torch_types import TorchNnModule
 if TYPE_CHECKING:

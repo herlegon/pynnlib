@@ -7,12 +7,12 @@ if is_cuda_available():
         to_nchw,
         to_hwc,
     )
-else:
-    from .torch_tensor import (
-        flip_r_b_channels,
-        to_nchw,
-        to_hwc,
-    )
+# else:
+#     from .torch_tensor import (
+#         flip_r_b_channels,
+#         to_nchw,
+#         to_hwc,
+#     )
 
-    class MemcpyKind:
-        pass
+#     class MemcpyKind:
+#         pass
