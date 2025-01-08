@@ -137,10 +137,12 @@ def find_model_arch(
             raise NotImplementedError(f"Detection function is not implemented for {arch.name}")
 
         if isinstance(detect_fct, tuple | list):
+            # List of functions for detection
             for func in detect_fct:
                 if func(model):
                     return arch
         else:
+            # Use a customized function for detection
             if detect_fct(model):
                 return arch
     return None
