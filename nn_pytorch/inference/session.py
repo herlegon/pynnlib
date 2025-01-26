@@ -40,7 +40,7 @@ class PyTorchSession(GenericSession):
         self.model = model
         self.device: torch.device = torch.device('cpu')
 
-        self.model.module.load_state_dict(self.model.state_dict)
+        self.model.module.load_state_dict(self.model.state_dict, strict=False)
         for _, v in self.model.module.named_parameters():
             v.requires_grad = False
 

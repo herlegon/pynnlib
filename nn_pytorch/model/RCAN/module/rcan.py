@@ -1,5 +1,5 @@
-from typing import Literal
 import torch.nn as nn
+import torch.nn.functional as F
 from torch import Tensor
 
 from .common import (
@@ -100,6 +100,7 @@ class RCAN(nn.Module):
         super().__init__()
 
         self.scale: int = scale
+        self.modulo = 2
 
         if norm:
             rgb_mean = (0.4488, 0.4371, 0.4040)
@@ -145,7 +146,15 @@ class RCAN(nn.Module):
 
 
     def forward(self, x: Tensor) -> Tensor:
+        # NCHW
+        h, w = x.shape[2:]
         x *= self.rgb_range
+
+        pad_h = (self.modulo - h % self.modulo) % self.modulo
+        pad_w = (self.modulo - w % self.modulo) % self.modulo
+        if pad_h or pad_w:
+            x = F.pad(x, (0, pad_w, 0, pad_h), mode="reflect")
+
         x = self.sub_mean(x)
         x = self.head(x)
 
@@ -154,6 +163,9 @@ class RCAN(nn.Module):
 
         x = self.tail(res)
         x = self.add_mean(x)
+
+        if pad_h or pad_w:
+            x = x[:, :, : h * self.scale, : w * self.scale]
 
         x /= self.rgb_range
         return x
