@@ -390,7 +390,6 @@ class NnLib:
         if trt_engine is None:
             nnlogger.debug(f"Error while converting {model.fwk_type} to TensorRT")
             return None
-        nnlogger.debug("converted")
 
         # Instantiate a new model
         trt_fwk = self.frameworks[NnFrameworkType.TENSORRT]
