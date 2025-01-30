@@ -148,6 +148,9 @@ def parse_engine(model: TrtModel) -> None:
             raise NotImplementedError(f"TensorRT: \'width\' scale ({scale_w}) differs from \'height\' scale ({scale_h})")
         scale = scale_w
 
+    del engine
+    engine = None
+
     model.update(
         scale=scale,
         in_nc=in_nc,

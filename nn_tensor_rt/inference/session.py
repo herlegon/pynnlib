@@ -1,6 +1,7 @@
 import numpy as np
 from pprint import pprint
 from pynnlib import is_tensorrt_available
+from utils.p_print import yellow
 if is_tensorrt_available():
     import tensorrt as trt
 
@@ -38,15 +39,23 @@ class TrtLogger(trt.ILogger):
 
     def log(self, severity: trt.ILogger.Severity, msg: str):
         if severity <= self.severity:
-            nnlogger.debug(f"{self.SEVERITY_LETTER_MAPPING[severity]} [TRT] {msg}")
+            print(f"{self.SEVERITY_LETTER_MAPPING[severity]} [TRT] {msg}")
 
-# TRT_LOGGER = trt.Logger(trt.Logger.INFO)
 
 TRT_LOGGER = TrtLogger(trt.ILogger.INFO)
-
+trt_runtime = trt.Runtime(TRT_LOGGER)
 
 def get_trt_logger():
     return TRT_LOGGER
+
+def get_trt_runtime():
+    # global trt_runtime
+    # global TRT_LOGGER
+    # del trt_runtime
+    # del TRT_LOGGER
+    # TRT_LOGGER = TrtLogger(trt.ILogger.INFO)
+    # trt_runtime = trt.Runtime(TRT_LOGGER)
+    return trt_runtime
 
 
 class TensorRtSession(GenericSession):
@@ -94,6 +103,7 @@ class TensorRtSession(GenericSession):
 
         # Deserialize and create the context
         model_path = self.model.filepath
+        print(yellow("TensorRtSession::initialize"))
         trt_runtime = trt.Runtime(get_trt_logger())
         with open(model_path, 'rb') as f:
             serialized_engine = f.read()

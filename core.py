@@ -357,7 +357,7 @@ class NnLib:
             suffix = suffix if suffix is not None else ''
             filepath = os.path.join(out_dir, f"{trt_basename}{suffix}.engine")
             if os.path.exists(filepath):
-                nnlogger.debug(f"[I] Engine {filepath} already exists")
+                nnlogger.debug(f"[I] Engine {filepath} already exists, do not convert")
                 return self.open(filepath, device)
             else:
                 nnlogger.debug(f"[I] Engine {filepath} does not exist")
