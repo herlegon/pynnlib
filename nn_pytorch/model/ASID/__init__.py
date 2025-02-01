@@ -29,6 +29,7 @@ def parse(model: PytorchModel) -> None:
     block_num: int = 1
     bias: bool = True
     pe: bool = True
+    window_size: int = 8
 
     model.update(
         arch_name=model.arch.name,
@@ -37,7 +38,7 @@ def parse(model: PytorchModel) -> None:
         out_nc=out_nc,
 
         ModuleClass=ASID,
-        window_size=8,
+        window_size=window_size,
         num_feat=num_feat,
         res_num=res_num,
         block_num=block_num,

@@ -43,19 +43,9 @@ class TrtLogger(trt.ILogger):
 
 
 TRT_LOGGER = TrtLogger(trt.ILogger.INFO)
-trt_runtime = trt.Runtime(TRT_LOGGER)
 
 def get_trt_logger():
     return TRT_LOGGER
-
-def get_trt_runtime():
-    # global trt_runtime
-    # global TRT_LOGGER
-    # del trt_runtime
-    # del TRT_LOGGER
-    # TRT_LOGGER = TrtLogger(trt.ILogger.INFO)
-    # trt_runtime = trt.Runtime(TRT_LOGGER)
-    return trt_runtime
 
 
 class TensorRtSession(GenericSession):
