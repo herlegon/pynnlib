@@ -87,6 +87,7 @@ class NnLib:
         model_arch, model_obj = fwk.find_model_arch(model_path, device)
         if model_arch is None:
             # Model architecture not found
+            # model_arch, model_obj = fwk.find_model_arch(model_path, device)
             raise ValueError(f"{red("[E] Erroneous model or unsupported architecture:")}: {model_path}")
             return None
         # nnlogger.debug(yellow(f"fwk={fwk.type.value}, arch={model_arch.name}"))

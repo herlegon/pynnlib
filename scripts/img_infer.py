@@ -153,7 +153,7 @@ Fallback to float if the execution provider does not support it
         "--n",
         type=int,
         required=False,
-        default=1,
+        default=10,
         help="Repeat \'n\' times the inference with the same image"
     )
 
@@ -259,9 +259,9 @@ Fallback to float if the execution provider does not support it
     if arguments.verbose:
         print("Initialize the session")
     try:
-        session.initialize(device=device, fp16=fp16)
+        session.initialize(device=device, fp16=fp16, warmup=True)
     except Exception as e:
-        session.initialize(device=device, fp16=fp16)
+        session.initialize(device=device, fp16=fp16, warmup=False)
         sys.exit(red(f"Error: {e}"))
 
     print(lightcyan(f"Inference with"), f"{model.filepath}")
@@ -271,7 +271,7 @@ Fallback to float if the execution provider does not support it
     print(lightcyan(f"\tDatatype:"), f"{'fp16' if fp16 else 'fp32'}")
 
     # Inference
-    inferences: int = arguments.n
+    inferences: int = arguments.n if arguments.profiling else 1
     if inferences > 1:
         print(lightcyan(f"Repeat inference"), inferences, lightcyan("times"))
 
