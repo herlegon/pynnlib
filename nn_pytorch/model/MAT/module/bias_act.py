@@ -15,7 +15,7 @@ import torch
 from torch import Tensor
 import traceback
 
-from .custom_ops import compile_plugin
+from .cuda_ext import compile_cuda_ext
 from .util import EasyDict
 
 _null_tensor = torch.empty([0])
@@ -53,20 +53,23 @@ activation_funcs = {
 
 # Compile CUDA plugin
 _inited: bool = False
+_bias_act_cuda_ext = None
 
-def _compile_plugin():
+def compile_bias_act_ext(verbose: bool = False):
     global _inited
+    global _bias_act_cuda_ext
 
     if not _inited:
         _inited = True
         try:
-            return compile_plugin(
-                "bias_act_plugin",
+            _bias_act_cuda_ext = compile_cuda_ext(
+                "bias_act_cuda",
                 sources=(
                     "bias_act.cpp",
                     "bias_act.cu"
                 ),
-                extra_cuda_cflags=['--use_fast_math']
+                verbose=verbose,
+                extra_cuda_cflags=["--use_fast_math", "-O2"]
             )
         except:
             warnings.warn("Failed to build CUDA kernels for bias_act. Falling back to slow reference implementation. Details:\n\n" + traceback.format_exc())
@@ -77,9 +80,7 @@ def _compile_plugin():
     else:
         raise RuntimeError("should be runned onlyce once")
 
-
-_plugin = _compile_plugin()
-
+# compile_bias_act_ext()
 
 def bias_act(
     x: Tensor,
@@ -119,7 +120,7 @@ def bias_act(
     Returns:
         Tensor of the same shape and datatype as `x`.
     """
-    if _plugin is not None and x.device.type == "cuda":
+    if _bias_act_cuda_ext is not None and x.device.type == "cuda":
         return _bias_act_cuda(
             dim=dim,
             act=act,
@@ -201,7 +202,7 @@ def _bias_act_cuda(dim=1, act="linear", alpha=None, gain=None, clamp=None):
             b = b.contiguous() if b is not None else _null_tensor
             y = x
             if act != "linear" or gain != 1 or clamp >= 0 or b is not _null_tensor:
-                y = _plugin.bias_act(x, b, _null_tensor, _null_tensor, _null_tensor, 0, dim, spec.cuda_idx, alpha, gain, clamp)
+                y = _bias_act_cuda_ext.bias_act(x, b, _null_tensor, _null_tensor, _null_tensor, 0, dim, spec.cuda_idx, alpha, gain, clamp)
             ctx.save_for_backward(
                 x if "x" in spec.ref or spec.has_2nd_grad else _null_tensor,
                 b if "x" in spec.ref or spec.has_2nd_grad else _null_tensor,
@@ -230,7 +231,7 @@ def _bias_act_cuda(dim=1, act="linear", alpha=None, gain=None, clamp=None):
         @staticmethod
         def forward(ctx, dy, x, b, y):
             ctx.memory_format = torch.channels_last if dy.ndim > 2 and dy.stride()[1] == 1 else torch.contiguous_format
-            dx = _plugin.bias_act(dy, b, x, y, _null_tensor, 1, dim, spec.cuda_idx, alpha, gain, clamp)
+            dx = _bias_act_cuda_ext.bias_act(dy, b, x, y, _null_tensor, 1, dim, spec.cuda_idx, alpha, gain, clamp)
             ctx.save_for_backward(
                 dy if spec.has_2nd_grad else _null_tensor,
                 x, b, y)
@@ -249,7 +250,7 @@ def _bias_act_cuda(dim=1, act="linear", alpha=None, gain=None, clamp=None):
                 d_dy = BiasActCudaGrad.apply(d_dx, x, b, y)
 
             if spec.has_2nd_grad and (ctx.needs_input_grad[1] or ctx.needs_input_grad[2]):
-                d_x = _plugin.bias_act(d_dx, b, x, y, dy, 2, dim, spec.cuda_idx, alpha, gain, clamp)
+                d_x = _bias_act_cuda_ext.bias_act(d_dx, b, x, y, dy, 2, dim, spec.cuda_idx, alpha, gain, clamp)
 
             if spec.has_2nd_grad and ctx.needs_input_grad[2]:
                 d_b = d_x.sum([i for i in range(d_x.ndim) if i != dim])

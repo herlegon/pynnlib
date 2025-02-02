@@ -162,5 +162,6 @@ cython_debug/
 profiling.bat
 *.lib
 *.exp
-nn_pytorch/model/MAT/module/bias_act_plugin
-nn_pytorch/model/MAT/module/upfirdn2d_plugin
+**/bias_act_cuda
+**/upfirdn2d_cuda
+**/fsa_cuda

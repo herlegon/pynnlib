@@ -79,5 +79,4 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
             min=(32, 32)
         )
     ),
-
 )

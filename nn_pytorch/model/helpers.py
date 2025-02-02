@@ -1,10 +1,25 @@
 from __future__ import annotations
 from collections import OrderedDict
+import glob
 import inspect
 import math
 from pprint import pprint
 from pynnlib.model import PytorchModel
 from ..torch_types import StateDict
+
+
+
+def find_compiler_bindir() -> str | None:
+    patterns = (
+        "C:\\Visual_Studio\\*\\Community\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64",
+        "C:\\Visual_Studio *\\vc/bin",
+        "C:\\Program Files\\Microsoft Visual Studio\\*\\Community\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64",
+    )
+    for pattern in patterns:
+        matches = sorted(glob.glob(pattern))
+        if len(matches):
+            return matches[-1]
+    return None
 
 
 

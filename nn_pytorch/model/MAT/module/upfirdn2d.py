@@ -15,7 +15,7 @@ import torch
 from torch import Tensor
 import traceback
 
-from .custom_ops import compile_plugin
+from .cuda_ext import compile_cuda_ext
 
 
 def _parse_scaling(scaling):
@@ -108,32 +108,35 @@ def setup_filter(
     return f
 
 
-# Compile CUDA plugin
+# Compile CUDA extension
 _inited: bool = False
+_upfirdn2d_cuda_ext = None
 
-def _compile_plugin():
+def compile_upfirdn2d_ext(verbose: bool = False):
     global _inited
+    global _upfirdn2d_cuda_ext
 
     if not _inited:
         _inited = True
         try:
-            return compile_plugin(
-                "upfirdn2d_plugin",
+            _upfirdn2d_cuda_ext = compile_cuda_ext(
+                "upfirdn2d_cuda",
                 sources=(
                     "upfirdn2d.cpp",
                     "upfirdn2d.cu"
                 ),
-                extra_cuda_cflags=['--use_fast_math']
+                verbose=verbose,
+                extra_cuda_cflags=["--use_fast_math", "-O2"]
             )
         except:
-            warnings.warn("Failed to build CUDA kernels for bias_act. Falling back to slow reference implementation. Details:\n\n" + traceback.format_exc())
+            warnings.warn("Failed to build CUDA kernels for upfirdn2d. Falling back to slow reference implementation. Details:\n\n" + traceback.format_exc())
             raise
 
         return None
     else:
         raise RuntimeError("should be runned onlyce once")
 
-_plugin = _compile_plugin()
+# compile_upfirdn2d_ext()
 
 
 def upfirdn2d(
@@ -185,7 +188,7 @@ def upfirdn2d(
         Tensor of the shape `[batch_size, num_channels, out_height, out_width]`.
     """
 
-    if _plugin is not None and x.device.type == "cuda":
+    if _upfirdn2d_cuda_ext is not None and x.device.type == "cuda":
         return _upfirdn2d_cuda(
             up=up,
             down=down,
@@ -275,10 +278,10 @@ def _upfirdn2d_cuda(
             y = x
             # print(f.dtype)
             if f.ndim == 2:
-                y = _plugin.upfirdn2d(y, f, upx, upy, downx, downy, padx0, padx1, pady0, pady1, flip_filter, gain)
+                y = _upfirdn2d_cuda_ext.upfirdn2d(y, f, upx, upy, downx, downy, padx0, padx1, pady0, pady1, flip_filter, gain)
             else:
-                y = _plugin.upfirdn2d(y, f.unsqueeze(0), upx, 1, downx, 1, padx0, padx1, 0, 0, flip_filter, np.sqrt(gain))
-                y = _plugin.upfirdn2d(y, f.unsqueeze(1), 1, upy, 1, downy, 0, 0, pady0, pady1, flip_filter, np.sqrt(gain))
+                y = _upfirdn2d_cuda_ext.upfirdn2d(y, f.unsqueeze(0), upx, 1, downx, 1, padx0, padx1, 0, 0, flip_filter, np.sqrt(gain))
+                y = _upfirdn2d_cuda_ext.upfirdn2d(y, f.unsqueeze(1), 1, upy, 1, downy, 0, 0, pady0, pady1, flip_filter, np.sqrt(gain))
             ctx.save_for_backward(f)
             ctx.x_shape = x.shape
             return y

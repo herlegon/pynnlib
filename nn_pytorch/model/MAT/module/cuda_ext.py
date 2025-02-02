@@ -1,57 +1,41 @@
 import os
-import glob
-from pprint import pprint
 import sys
-from typing import Any, Literal
+import time
+from typing import Any
 import warnings
 import torch
 import torch.utils.cpp_extension
 import importlib
 import hashlib
 
+from ...helpers import find_compiler_bindir
 from utils.p_print import *
 
 
 
-_mat_plugins: dict[str, Any] = {}
-
-verbosity: Literal["none", "brief", "full"] = "full"
+_mat_cuda_ext: dict[str, Any] = {}
 
 
-os.environ["TORCH_CUDA_ARCH_LIST"] = "8.9"
-def _find_compiler_bindir() -> str | None:
-    patterns = (
-        "C:\\Visual_Studio\\*\\Community\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64",
-        "C:\\Visual_Studio *\\vc/bin",
-        "C:\\Program Files\\Microsoft Visual Studio\\*\\Community\\VC\\Tools\\MSVC\\*\\bin\\Hostx64\\x64",
-    )
-    for pattern in patterns:
-        matches = sorted(glob.glob(pattern))
-        if len(matches):
-            return matches[-1]
-    return None
-
-
-
-
-def compile_plugin(
+def compile_cuda_ext(
     module_name: str,
     sources: tuple[str],
     verbose: bool = False,
     **build_kwargs
 ):
-    global _mat_plugins
-    if module_name in _mat_plugins:
+    os.environ["TORCH_CUDA_ARCH_LIST"] = "8.9"
+
+    global _mat_cuda_ext
+    if module_name in _mat_cuda_ext:
         try:
             module = importlib.import_module(module_name)
             sys.modules[module_name] = module
         except:
             warnings.warn(yellow(f"failed to load module {module_name}, compile"))
 
-    _mat_plugins[module_name] = None
+    _mat_cuda_ext[module_name] = None
 
     # Can compile?
-    compiler_dir: str | None = _find_compiler_bindir()
+    compiler_dir: str | None = find_compiler_bindir()
     if (
         not torch.cuda.is_available()
         or not compiler_dir
@@ -65,12 +49,11 @@ def compile_plugin(
 
     # Append compiler dir if cl.exe is not already in path
     if os.system("where cl.exe >nul 2>nul") != 0:
-        compiler_bindir = _find_compiler_bindir()
-        if compiler_bindir is None:
-            raise RuntimeError(f"Could not find MSVC/GCC/CLANG installation on this computer. Check _find_compiler_bindir() in \"{__file__}\".")
-        os.environ["PATH"] += ";" + compiler_bindir
+        if compiler_dir is None:
+            raise RuntimeError(f"Could not find MSVC/GCC/CLANG installation on this computer. Check compiler_dir()")
+        os.environ["PATH"] += ";" + compiler_dir
         if verbose:
-            print(yellow("found compiler"), compiler_bindir, flush=True)
+            print(yellow("found compiler"), compiler_dir, flush=True)
 
     # Torch build directory
     os.environ["TORCH_EXTENSIONS_DIR"] = os.path.abspath(os.path.dirname(__file__))
@@ -86,6 +69,7 @@ def compile_plugin(
     hash_file = os.path.join(torch_build_dir, hash_md5.hexdigest())
 
     # Recreate a directory to rebuild the module
+    do_compile: bool = False
     if not os.path.isfile(hash_file):
         # Recreate a directory
         try:
@@ -95,18 +79,23 @@ def compile_plugin(
         os.makedirs(torch_build_dir, exist_ok=True)
         with open(hash_file, 'w'):
             pass
+        do_compile = True
 
     if verbose:
         print(lightcyan(f"Load cpp extension: {module_name}\nsources: {sources}"))
+    start_time: float = time.time()
     torch.utils.cpp_extension.load(
         name=module_name,
         build_directory=torch_build_dir,
-        verbose=verbose,
+        verbose=verbose or do_compile,
         sources=sources,
+        with_cuda=True,
         **build_kwargs
     )
+    print(f"MAT: {'compiled' if do_compile else 'loaded'} {module_name} in {time.time() - start_time:.02f}s")
 
     module = importlib.import_module(module_name)
-    _mat_plugins[module_name] = module
+    _mat_cuda_ext[module_name] = module
 
     return module
+
