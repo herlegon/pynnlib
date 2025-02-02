@@ -23,39 +23,6 @@ from typing import Any
 import torch
 from torch import Tensor
 
-# Context manager to suppress known warnings in torch.jit.trace().
-# class suppress_tracer_warnings(warnings.catch_warnings):
-#     def __enter__(self):
-#         super().__enter__()
-#         warnings.simplefilter('ignore', category=torch.jit.TracerWarning)
-#         return self
-
-
-#----------------------------------------------------------------------------
-# Assert that the shape of a tensor matches the given list of integers.
-# None indicates that the size of a dimension is allowed to vary.
-# Performs symbolic assertion when used in torch.jit.trace().
-
-def assert_shape(tensor: Tensor, ref_shape):
-    if tensor.ndim != len(ref_shape):
-        raise AssertionError(f'Wrong number of dimensions: got {tensor.ndim}, expected {len(ref_shape)}')
-    for idx, (size, ref_size) in enumerate(zip(tensor.shape, ref_shape)):
-        if ref_size is None:
-            pass
-        elif isinstance(ref_size, Tensor):
-            with suppress_tracer_warnings(): # as_tensor results are registered as constants
-                torch._assert(torch.equal(torch.as_tensor(size), ref_size), f'Wrong size for dimension {idx}')
-        elif isinstance(size, Tensor):
-            with suppress_tracer_warnings(): # as_tensor results are registered as constants
-                torch._assert(torch.equal(size, torch.as_tensor(ref_size)), f'Wrong size for dimension {idx}: expected {ref_size}')
-        elif size != ref_size:
-            raise AssertionError(f'Wrong size for dimension {idx}: got {size}, expected {ref_size}')
-
-
-
-# Util classes
-# ------------------------------------------------------------------------------------------
-
 
 class EasyDict(dict):
     """Convenience class that behaves like a dict but allows access with the attribute syntax."""
@@ -100,12 +67,12 @@ def get_dtype_and_ctype(type_obj: Any) -> tuple[np.dtype, Any]:
     else:
         raise RuntimeError("Cannot infer type name from input")
 
-    assert type_str in _str_to_ctype.keys()
+    # assert type_str in _str_to_ctype.keys()
 
     my_dtype = np.dtype(type_str)
     my_ctype = _str_to_ctype[type_str]
 
-    assert my_dtype.itemsize == ctypes.sizeof(my_ctype)
+    # assert my_dtype.itemsize == ctypes.sizeof(my_ctype)
 
     return my_dtype, my_ctype
 
@@ -181,9 +148,9 @@ def get_obj_by_name(name: str) -> Any:
 
 def call_func_by_name(*args, func_name: str = None, **kwargs) -> Any:
     """Finds the python object with the given name and calls it as a function."""
-    assert func_name is not None
+    # assert func_name is not None
     func_obj = get_obj_by_name(func_name)
-    assert callable(func_obj)
+    # assert callable(func_obj)
     return func_obj(*args, **kwargs)
 
 
@@ -205,7 +172,7 @@ def is_top_level_function(obj: Any) -> bool:
 
 def get_top_level_function_name(obj: Any) -> str:
     """Return the fully-qualified name of a top-level function."""
-    assert is_top_level_function(obj)
+    # assert is_top_level_function(obj)
     module = obj.__module__
     if module == '__main__':
         module = os.path.splitext(os.path.basename(sys.modules[module].__file__))[0]

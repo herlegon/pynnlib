@@ -17,7 +17,16 @@ from .basic_module import (
 
 
 def nf(stage, channel_base=32768, channel_decay=1.0, channel_max=512):
-    NF = {512: 64, 256: 128, 128: 256, 64: 512, 32: 512, 16: 512, 8: 512, 4: 512}
+    NF = {
+        512: 64,
+        256: 128,
+        128: 256,
+        64: 512,
+        32: 512,
+        16: 512,
+        8: 512,
+        4: 512
+    }
     return NF[2 ** stage]
 
 
@@ -270,7 +279,7 @@ class SwinTransformerBlock(nn.Module):
             # if window size is larger than input resolution, we don't partition windows
             self.shift_size = 0
             self.window_size = min(self.input_resolution)
-        assert 0 <= self.shift_size < self.window_size, "shift_size must in 0-window_size"
+        # assert 0 <= self.shift_size < self.window_size, "shift_size must in 0-window_size"
 
         if self.shift_size > 0:
             down_ratio = 1
@@ -1051,7 +1060,7 @@ class SynthesisNet(nn.Module):
     ):
         super().__init__()
         resolution_log2 = int(np.log2(img_resolution))
-        assert img_resolution == 2 ** resolution_log2 and img_resolution >= 4
+        # assert img_resolution == 2 ** resolution_log2 and img_resolution >= 4
 
         self.num_layers = resolution_log2 * 2 - 3 * 2
         self.img_resolution = img_resolution

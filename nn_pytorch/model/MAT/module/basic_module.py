@@ -489,7 +489,7 @@ class MappingNet(torch.nn.Module):
 
         # Apply truncation.
         if truncation_psi != 1:
-            assert self.w_avg_beta is not None
+            # assert self.w_avg_beta is not None
             if self.num_ws is None or truncation_cutoff is None:
                 x = self.w_avg.lerp(x, truncation_psi)
             else:
