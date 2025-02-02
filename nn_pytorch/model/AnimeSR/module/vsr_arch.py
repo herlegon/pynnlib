@@ -1,6 +1,7 @@
 import torch
 from torch import nn as nn
 from torch.nn import functional as F
+from torch import Tensor
 
 from .arch_util import ResidualBlockNoBN, pixel_unshuffle
 
@@ -85,39 +86,27 @@ class MSRSWVSR(nn.Module):
         self.num_feat = num_feat
 
         # 3(img channel) * 3(prev cur nxt 3 imgs) + 3(hr img channel) * netscale * netscale + num_feat
-        self.recurrent_cell = RightAlignMSConvResidualBlocks(3 * 3 + 3 * netscale * netscale + num_feat, num_feat,
-                                                             num_feat + 3 * netscale * netscale, num_block)
+        self.recurrent_cell = RightAlignMSConvResidualBlocks(
+            3 * 3 + 3 * netscale * netscale + num_feat,
+            num_feat,
+            num_feat + 3 * netscale * netscale, num_block
+        )
         self.lrelu = nn.LeakyReLU(negative_slope=0.1)
         self.pixel_shuffle = nn.PixelShuffle(netscale)
         self.netscale = netscale
 
-    def cell(self, x, fb, state):
+
+    def forward(self, x: Tensor, fb, state: Tensor) -> tuple[Tensor, Tensor]:
         res = x[:, 3:6]
         # pre frame, cur frame, nxt frame, pre sr frame, pre hidden state
         inp = torch.cat((x, pixel_unshuffle(fb, self.netscale), state), dim=1)
         # the out contains both state and sr frame
         out = self.recurrent_cell(inp)
-        out_img = self.pixel_shuffle(out[:, :3 * self.netscale * self.netscale]) + F.interpolate(
-            res, scale_factor=self.netscale, mode='bilinear', align_corners=False)
+        out_img = (
+            self.pixel_shuffle(out[:, :3 * self.netscale * self.netscale])
+            + F.interpolate(res, scale_factor=self.netscale, mode='bilinear', align_corners=False)
+        )
         out_state = self.lrelu(out[:, 3 * self.netscale * self.netscale:])
 
         return out_img, out_state
 
-    def forward(self, x):
-        b, n, c, h, w = x.size()
-        # initialize previous sr frame and previous hidden state as zero tensor
-        out = x.new_zeros(b, c, h * self.netscale, w * self.netscale)
-        state = x.new_zeros(b, self.num_feat, h, w)
-        out_l = []
-        for i in range(n):
-            if i == 0:
-                # there is no previous frame for the 1st frame, so reuse 1st frame as previous
-                out, state = self.cell(torch.cat((x[:, i], x[:, i], x[:, i + 1]), dim=1), out, state)
-            elif i == n - 1:
-                # there is no next frame for the last frame, so reuse last frame as next
-                out, state = self.cell(torch.cat((x[:, i - 1], x[:, i], x[:, i]), dim=1), out, state)
-            else:
-                out, state = self.cell(torch.cat((x[:, i - 1], x[:, i], x[:, i + 1]), dim=1), out, state)
-            out_l.append(out)
-
-        return torch.stack(out_l, dim=1)

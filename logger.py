@@ -3,6 +3,6 @@ import logging
 nnlogger: logging.Logger = logging.getLogger("pynnlib")
 
 # Enable this to debug imports
-# import sys
+import sys
 # nnlogger.addHandler(logging.StreamHandler(sys.stdout))
-# nnlogger.setLevel("DEBUG")
+nnlogger.setLevel("DEBUG")

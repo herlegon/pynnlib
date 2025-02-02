@@ -8,9 +8,9 @@ import torch
 from pynnlib.import_libs import is_cuda_available
 from pynnlib.model import OnnxModel
 from pynnlib.utils.torch_tensor import (
-    flip_r_b_channels,
-    to_nchw,
-    to_hwc,
+    flip_r_b_channels_torch,
+    to_nchw_torch,
+    to_hwc_torch,
 )
 
 
@@ -99,8 +99,8 @@ class OnnxSession:
 
         if self.fp16:
             in_img = in_img.astype(np.float16, copy=False)
-        in_img = flip_r_b_channels(in_img)
-        in_img = to_nchw(in_img)
+        in_img = flip_r_b_channels_torch(in_img)
+        in_img = to_nchw_torch(in_img)
         in_img = np.ascontiguousarray(in_img)
 
         out_img: np.ndarray = self.session.run(
@@ -108,8 +108,8 @@ class OnnxSession:
             {self.input_name: in_img}
         )[0]
 
-        out_img = to_hwc(out_img)
-        out_img = flip_r_b_channels(out_img)
+        out_img = to_hwc_torch(out_img)
+        out_img = flip_r_b_channels_torch(out_img)
         out_img = out_img.clip(0, 1., out=out_img)
         if self.fp16:
             out_img = out_img.astype(np.float32)
@@ -117,7 +117,7 @@ class OnnxSession:
         return np.ascontiguousarray(out_img)
 
 
-    def run(self, in_img: np.ndarray) -> np.ndarray:
+    def process(self, in_img: np.ndarray) -> np.ndarray:
         if in_img.dtype != np.float32:
             raise ValueError("np.float32 img only")
 
@@ -137,8 +137,8 @@ class OnnxSession:
         in_tensor: torch.Tensor = torch.from_numpy(np.ascontiguousarray(in_img))
         in_tensor = in_tensor.to(tensor_device, dtype=torch.float32)
         in_tensor = in_tensor.half() if self.fp16 else in_tensor.float()
-        in_tensor = flip_r_b_channels(in_tensor)
-        in_tensor = to_nchw(in_tensor)
+        in_tensor = flip_r_b_channels_torch(in_tensor)
+        in_tensor = to_nchw_torch(in_tensor)
         in_tensor = in_tensor.contiguous()
 
         out_tensor: torch.Tensor = torch.empty(
@@ -168,8 +168,8 @@ class OnnxSession:
         session.run_with_iobinding(binding)
 
         out_tensor = torch.clamp_(out_tensor, 0, 1)
-        out_tensor = to_hwc(out_tensor)
-        out_tensor = flip_r_b_channels(out_tensor)
+        out_tensor = to_hwc_torch(out_tensor)
+        out_tensor = flip_r_b_channels_torch(out_tensor)
         out_tensor = out_tensor.float()
         out_img: np.ndarray = out_tensor.detach().cpu().numpy()
 

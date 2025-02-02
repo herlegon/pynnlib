@@ -87,7 +87,8 @@ class NnLib:
         model_arch, model_obj = fwk.find_model_arch(model_path, device)
         if model_arch is None:
             # Model architecture not found
-            raise ValueError(red("[E] Erroneous model or unsupported architecture"))
+            # model_arch, model_obj = fwk.find_model_arch(model_path, device)
+            raise ValueError(f"{red("[E] Erroneous model or unsupported architecture:")}: {model_path}")
             return None
         # nnlogger.debug(yellow(f"fwk={fwk.type.value}, arch={model_arch.name}"))
         model = self._create_model(
@@ -146,9 +147,7 @@ class NnLib:
                 model_path.replace(".pth", "_rlg.pth")
             )
 
-        if any(x <= 0 for x in [model.scale,
-                                model.in_nc,
-                                model.out_nc]):
+        if any(x <= 0 for x in (model.scale, model.in_nc, model.out_nc)):
             nnlogger.debug("warning: at least a property has not been found, unsupported model")
             # return None
 
@@ -359,7 +358,7 @@ class NnLib:
             suffix = suffix if suffix is not None else ''
             filepath = os.path.join(out_dir, f"{trt_basename}{suffix}.engine")
             if os.path.exists(filepath):
-                nnlogger.debug(f"[I] Engine {filepath} already exists")
+                nnlogger.debug(f"[I] Engine {filepath} already exists, do not convert")
                 return self.open(filepath, device)
             else:
                 nnlogger.debug(f"[I] Engine {filepath} does not exist")
@@ -392,7 +391,6 @@ class NnLib:
         if trt_engine is None:
             nnlogger.debug(f"Error while converting {model.fwk_type} to TensorRT")
             return None
-        nnlogger.debug("converted")
 
         # Instantiate a new model
         trt_fwk = self.frameworks[NnFrameworkType.TENSORRT]
@@ -428,7 +426,7 @@ class NnLib:
         framework: NnFrameworkType,
         ModelSession: NnModelSession
     ):
-        """Set a custom contructor when creating a new session"""
+        """Set a custom session contructor ffor a framework"""
         if framework == NnFrameworkType.TENSORRT and not is_tensorrt_available():
             raise ValueError("[E] Framework not supported: cannot set a custom session function")
         self.frameworks[framework].Session = ModelSession

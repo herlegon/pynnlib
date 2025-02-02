@@ -9,7 +9,7 @@ try:
 except:
     torch_device = str
     pass
-from typing import Any, Optional, overload
+from typing import Any, Literal, Optional, overload
 from .model import (
     OnnxModel,
     NnModel,
@@ -25,13 +25,23 @@ from .session import NnModelSession
 
 ParseFunction = Callable[[NnModel], None]
 
+
+@dataclass(slots=True)
+class InferType:
+    type: Literal['simple', 'inpaint', 'temporal'] = 'simple'
+    inputs: int = 1
+    outputs: int = 1
+
+
+
 @dataclass
 class NnGenericArchitecture:
     name: str = 'unknown'
     type: NnArchitectureType = NnArchitectureType()
     category: str = 'Generic'
 
-    # Function used to detect arch
+    # Function used to detect arch,
+    # can be customized for more scalability
     detect: tuple[Callable] | Callable = None
 
     """Parse a model object and update the model"""
@@ -47,12 +57,8 @@ class NnGenericArchitecture:
 
     size_constraint: SizeConstraint | None = None
 
-    # is video/multiframes
-    is_temporal: bool = False
-
-    # Temporal parameters
-    # temporal_params: TemporalParameters | None = None
-
+    # Simple, temporal, nb of inputs/outputs, etc.
+    infer_type: InferType = field(default_factory=InferType)
 
     @overload
     def update(self, d: dict[Any, Any]) -> None: ...
@@ -87,7 +93,7 @@ ConvertToTensorrtFct = Callable[
 
 @dataclass
 class NnPytorchArchitecture(NnGenericArchitecture):
-    detection_keys: tuple[str | tuple[str]] = ()
+    detection_keys: tuple[str | tuple[str]] | dict = ()
     """Convert a model from pytorch to onnx"""
     to_onnx: ConvertToOnnxFct | None = None
     to_tensorrt: ConvertToTensorrtFct | None = None
@@ -131,10 +137,12 @@ def find_model_arch(
             raise NotImplementedError(f"Detection function is not implemented for {arch.name}")
 
         if isinstance(detect_fct, tuple | list):
+            # List of functions for detection
             for func in detect_fct:
                 if func(model):
                     return arch
         else:
+            # Use a customized function for detection
             if detect_fct(model):
                 return arch
     return None

@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from einops import rearrange
 from einops.layers.torch import Rearrange
-from timm.models.layers import DropPath, trunc_normal_
+from timm.layers import DropPath, trunc_normal_
 
 
 class WMSA(nn.Module):
@@ -173,7 +173,7 @@ class SCUNet(nn.Module):
         config=[4] * 7,
         dim=64,
         drop_path_rate=0.0,
-        input_resolution=256
+        input_resolution=256,
     ):
         super().__init__()
         self.config = config
@@ -235,7 +235,9 @@ class SCUNet(nn.Module):
 
 
     def forward(self, x0: torch.Tensor) -> torch.Tensor:
-        h, w = x0.size()[-2:]
+        # todo: use channels_last
+        w = x0.shape[3] if x0.shape[1] <= 3 else x0.shape[1]
+        h = x0.shape[2]
 
         mod_pad_h: int = (64 - h % 64) % 64
         mod_pad_w: int = (64 - w % 64) % 64

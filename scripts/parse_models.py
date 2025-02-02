@@ -129,6 +129,8 @@ def main():
                 if arguments.verbose:
                     print(model)
             except Exception as e:
+                # For debug:
+                model: NnModel = nnlib.open(filepath, device)
                 print(e)
 
         if not arguments.recursive:

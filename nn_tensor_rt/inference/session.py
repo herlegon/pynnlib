@@ -1,6 +1,7 @@
 import numpy as np
 from pprint import pprint
 from pynnlib import is_tensorrt_available
+from utils.p_print import yellow
 if is_tensorrt_available():
     import tensorrt as trt
 
@@ -9,9 +10,9 @@ from pynnlib.logger import nnlogger
 from pynnlib.model import TrtModel
 from pynnlib.session import GenericSession, set_cuda_device
 from pynnlib.utils.torch_tensor import (
-    flip_r_b_channels,
-    to_nchw,
-    to_hwc,
+    flip_r_b_channels_torch,
+    to_nchw_torch,
+    to_hwc_torch,
 )
 
 
@@ -38,12 +39,10 @@ class TrtLogger(trt.ILogger):
 
     def log(self, severity: trt.ILogger.Severity, msg: str):
         if severity <= self.severity:
-            nnlogger.debug(f"{self.SEVERITY_LETTER_MAPPING[severity]} [TRT] {msg}")
+            print(f"{self.SEVERITY_LETTER_MAPPING[severity]} [TRT] {msg}")
 
-# TRT_LOGGER = trt.Logger(trt.Logger.INFO)
 
 TRT_LOGGER = TrtLogger(trt.ILogger.INFO)
-
 
 def get_trt_logger():
     return TRT_LOGGER
@@ -94,6 +93,7 @@ class TensorRtSession(GenericSession):
 
         # Deserialize and create the context
         model_path = self.model.filepath
+        print(yellow("TensorRtSession::initialize"))
         trt_runtime = trt.Runtime(get_trt_logger())
         with open(model_path, 'rb') as f:
             serialized_engine = f.read()
@@ -126,10 +126,10 @@ class TensorRtSession(GenericSession):
         nnlogger.debug(f"[V] warmup ({count}x) with a random img ({shape})")
         img = np.random.random(shape).astype(np.float32)
         for _ in range(count):
-            self.run(img)
+            self.process(img)
 
 
-    def run(self, in_img: np.ndarray) -> np.ndarray | None:
+    def process(self, in_img: np.ndarray) -> np.ndarray | None:
         """This is the worst optimized inference function to perform inference
         of TensorRT engines.
         """

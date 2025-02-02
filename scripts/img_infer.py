@@ -103,7 +103,7 @@ def main():
         "--cuda",
         action="store_true",
         required=False,
-        default=False,
+        default=True,
         help="""Use the first cuda device as the execution provider.
 Fallback to cpu if no CUDA device found.
 \n"""
@@ -153,7 +153,7 @@ Fallback to float if the execution provider does not support it
         "--n",
         type=int,
         required=False,
-        default=1,
+        default=10,
         help="Repeat \'n\' times the inference with the same image"
     )
 
@@ -172,6 +172,13 @@ Fallback to float if the execution provider does not support it
         help="Used to debug"
     )
 
+    parser.add_argument(
+        "--profiling",
+        action="store_true",
+        required=False,
+        help="for profiling"
+    )
+
     arguments = parser.parse_args()
 
     if arguments.debug:
@@ -187,7 +194,6 @@ Fallback to float if the execution provider does not support it
     try:
         in_img = load_image_fp32(in_img_fp)
     except:
-        in_img = load_image_fp32(in_img_fp)
         sys.exit(red(f"Failed to open image: {arguments.img}"))
 
     # Output image filepath:
@@ -253,9 +259,9 @@ Fallback to float if the execution provider does not support it
     if arguments.verbose:
         print("Initialize the session")
     try:
-        session.initialize(device=device, fp16=fp16)
+        session.initialize(device=device, fp16=fp16, warmup=True)
     except Exception as e:
-        session.initialize(device=device, fp16=fp16)
+        session.initialize(device=device, fp16=fp16, warmup=False)
         sys.exit(red(f"Error: {e}"))
 
     print(lightcyan(f"Inference with"), f"{model.filepath}")
@@ -265,13 +271,18 @@ Fallback to float if the execution provider does not support it
     print(lightcyan(f"\tDatatype:"), f"{'fp16' if fp16 else 'fp32'}")
 
     # Inference
-    inferences: int = arguments.n
+    inferences: int = arguments.n if arguments.profiling else 1
     if inferences > 1:
         print(lightcyan(f"Repeat inference"), inferences, lightcyan("times"))
 
+    if arguments.profiling:
+        print("start", flush=True)
+        time.sleep(3)
+
+
     start_time= time.time()
     for _ in range(inferences):
-        out_img: np.ndarray = session.run(in_img)
+        out_img: np.ndarray = session.process(in_img)
     elapsed = time.time() - start_time
 
     if inferences > 1:

@@ -157,6 +157,7 @@ class GenericModel:
             else self._size_constraint
         )
 
+
     @size_constraint.setter
     def size_constraint(self, size_constraint: SizeConstraint) -> None:
         self._size_constraint = size_constraint

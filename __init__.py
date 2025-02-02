@@ -44,7 +44,8 @@ from .framework import (
 )
 
 from .utils.torch_tensor import (
-    np_to_torch_dtype
+    torch_to_np_dtype,
+    torch_to_cp_dtype,
 )
 
 from .utils.tensor import *
@@ -77,7 +78,8 @@ __all__ = [
 
     # For advanced user and dev
     "HostDeviceMemory",
-    "np_to_torch_dtype",
+    "torch_to_cp_dtype",
+    "torch_to_np_dtype",
     "flip_r_b_channels",
     "to_nchw",
     "to_hwc",

@@ -9,10 +9,9 @@ if is_cuda_available():
     )
 else:
     from .torch_tensor import (
-        np_to_torch_dtype,
-        flip_r_b_channels,
-        to_nchw,
-        to_hwc,
+        flip_r_b_channels_torch as flip_r_b_channels,
+        to_nchw_torch as to_nchw,
+        to_hwc_torch as to_hwc,
     )
 
     class MemcpyKind:
