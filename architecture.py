@@ -133,9 +133,7 @@ def find_model_arch(
     architectures: dict[str, NnArchitecture]
 ) -> NnArchitecture:
     """Detect the model architecture and returns it"""
-    print("detection")
     for arch in architectures.values():
-        print(arch.name)
         if (detect_fct := arch.detect) is None:
             raise NotImplementedError(f"Detection function is not implemented for {arch.name}")
 

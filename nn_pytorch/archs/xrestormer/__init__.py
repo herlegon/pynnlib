@@ -71,7 +71,7 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
         to_onnx=to_onnx,
         dtypes=('fp32', 'fp16'),
         size_constraint=SizeConstraint(
-            min=(8, 8)
+            min=(64, 64)
         )
     ),
 )

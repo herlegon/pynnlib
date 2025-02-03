@@ -131,6 +131,7 @@ Ignored if the model is not an onnx model."
 
     parser.add_argument(
         "--fp32",
+        "-fp32",
         action="store_true",
         required=False,
         default=True,
@@ -140,6 +141,7 @@ Ignored if the model is not an onnx model."
 
     parser.add_argument(
         "--fp16",
+        "-fp16",
         action="store_true",
         required=False,
         default=False,

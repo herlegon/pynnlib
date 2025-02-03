@@ -282,13 +282,14 @@ class OCAB(nn.Module):
 
         # spatial attention
         qs = rearrange(
-            qs, "b c (h p1) (w p2) -> (b h w) (p1 p2) c",
+            qs,
+            "b c (h p1) (w p2) -> (b h w) (p1 p2) c",
             p1=self.window_size,
-            p2 = self.window_size
+            p2=self.window_size
         )
         ks, vs = map(lambda t: self.unfold(t), (ks, vs))
         ks, vs = map(
-            lambda t: rearrange(t, "b (c j) i -> (b i) j c", c = self.inner_dim),
+            lambda t: rearrange(t, "b (c j) i -> (b i) j c", c=self.inner_dim),
             (ks, vs)
         )
 
@@ -296,7 +297,7 @@ class OCAB(nn.Module):
         #split heads
         qs, ks, vs = map(
             lambda t: rearrange(
-                t, "b n (head c) -> (b head) n c", head = self.num_spatial_heads
+                t, "b n (head c) -> (b head) n c", head=self.num_spatial_heads
             ),
             (qs, ks, vs)
         )
@@ -338,9 +339,9 @@ class TransformerBlock(nn.Module):
     ):
         super().__init__()
 
-        self.spatial_attn = OCAB(dim, window_size, overlap_ratio,
-        num_spatial_heads,
-        spatial_dim_head, bias)
+        self.spatial_attn = OCAB(
+            dim, window_size, overlap_ratio, num_spatial_heads, spatial_dim_head, bias
+        )
         self.channel_attn = ChannelAttention(dim, num_channel_heads, bias)
 
         self.norm1 = LayerNorm(dim, layer_norm_type)
@@ -595,7 +596,7 @@ class XRestormer(nn.Module):
                     bias=bias,
                     layer_norm_type=layer_norm_type
                 )
-                for i in range(num_refinement_blocks)
+                for _ in range(num_refinement_blocks)
             ]
         )
 
@@ -605,6 +606,11 @@ class XRestormer(nn.Module):
 
 
     def forward(self, x: Tensor) -> Tensor:
+        h, w  = x.shape[2:]
+        modulo: int = 64
+        mod_pad_h: int = (modulo - h % modulo) % modulo
+        mod_pad_w: int = (modulo - w % modulo) % modulo
+        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
 
         if self.scale > 1:
             x = F.interpolate(
@@ -639,6 +645,9 @@ class XRestormer(nn.Module):
 
         out_dec_level1 = self.refinement(out_dec_level1)
         out_dec_level1 = self.output(out_dec_level1) + x
+
+        if mod_pad_h or mod_pad_w:
+            out_dec_level1 = out_dec_level1[:, :, :self.scale * h, : self.scale * w]
 
         return out_dec_level1
 
