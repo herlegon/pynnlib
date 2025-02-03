@@ -1,7 +1,7 @@
 from __future__ import annotations
 from collections import OrderedDict
-from .model import MODEL_ARCHITECTURES
-from .model.parser import get_model_arch
+from .archs import MODEL_ARCHITECTURES
+from .archs.parser import get_model_arch
 from .inference.session import PyTorchSession
 from pynnlib.framework import (
     NnFramework,

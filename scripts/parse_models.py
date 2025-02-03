@@ -1,4 +1,7 @@
-from argparse import ArgumentParser, RawTextHelpFormatter
+from argparse import (
+    ArgumentParser,
+    RawTextHelpFormatter
+)
 import logging
 import logging.config
 import os

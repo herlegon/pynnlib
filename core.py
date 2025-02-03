@@ -1,7 +1,7 @@
 from __future__ import annotations
 import json
+from warnings import warn
 
-from .nn_pytorch.torch_types import StateDict
 from .import_libs import is_tensorrt_available
 from .logger import nnlogger
 from datetime import datetime
@@ -15,7 +15,7 @@ import time
 
 try:
     from .nn_tensor_rt.trt_types import ShapeStrategy
-    from .nn_tensor_rt.model.save import generate_tensorrt_basename
+    from .nn_tensor_rt.archs.save import generate_tensorrt_basename
 except:
     # nnlogger.debug("[W] TensorRT is not supported: model cannot be converted")
     def generate_tensorrt_basename(*args) -> str:
@@ -47,7 +47,7 @@ from .nn_types import (
     NnModelObject,
     NnFrameworkType
 )
-from .nn_pytorch.model.unpickler import RestrictedUnpickle
+from .nn_pytorch.archs.unpickler import RestrictedUnpickle
 from .session import NnModelSession
 
 
@@ -80,17 +80,20 @@ class NnLib:
         """Open and parse a model and returns its parameters"""
         if not os.path.exists(model_path):
             raise ValueError(f"[E] {model_path} does not exist")
+
         fwk = self.get_framework_from_extension(model_path)
         if fwk is None:
-            raise NotImplementedError(f"[E] No framework found for model {model_path}")
+            warn(f"[E] No framework found for model {model_path}")
             return None
-        model_arch, model_obj = fwk.find_model_arch(model_path, device)
+
+        model_arch, model_obj = fwk.detect_arch(model_path, device)
         if model_arch is None:
             # Model architecture not found
             # model_arch, model_obj = fwk.find_model_arch(model_path, device)
-            raise ValueError(f"{red("[E] Erroneous model or unsupported architecture:")}: {model_path}")
+            warn(f"{red("[E] Erroneous model or unsupported architecture:")}: {model_path}")
             return None
         # nnlogger.debug(yellow(f"fwk={fwk.type.value}, arch={model_arch.name}"))
+
         model = self._create_model(
             nn_model_path=model_path,
             framework=fwk,
@@ -259,7 +262,7 @@ class NnLib:
 
         # Instantiate a new model
         onnx_fwk = self.frameworks[NnFrameworkType.ONNX]
-        model_arch, _ = onnx_fwk.find_model_arch(onnx_model_object)
+        model_arch, _ = onnx_fwk.detect_arch(onnx_model_object)
         onnx_model = self._create_model(
             nn_model_path='',
             framework=onnx_fwk,
@@ -394,7 +397,7 @@ class NnLib:
 
         # Instantiate a new model
         trt_fwk = self.frameworks[NnFrameworkType.TENSORRT]
-        model_arch, _ = trt_fwk.find_model_arch(trt_engine)
+        model_arch, _ = trt_fwk.detect_arch(trt_engine)
         trt_model = self._create_model(
             nn_model_path='',
             framework=trt_fwk,

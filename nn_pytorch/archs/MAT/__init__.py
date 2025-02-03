@@ -1,6 +1,6 @@
 from __future__ import annotations
 from pprint import pprint
-from pynnlib.nn_pytorch.model import contains_any_keys
+from pynnlib.nn_pytorch.archs import contains_any_keys
 from pynnlib.utils.p_print import *
 from pynnlib.architecture import (
     InferType,

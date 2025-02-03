@@ -34,7 +34,7 @@ class NnFramework:
     Session: NnModelSession | None = None
 
 
-    def find_model_arch(
+    def detect_arch(
         self,
         model: NnModelObject,
         device: str = 'cpu'
@@ -68,7 +68,9 @@ def import_frameworks() -> dict[NnFrameworkType, NnFramework]:
     """This function walk through the arch directory and try to import frameworks"""
     frameworks: dict[NnFrameworkType, NnFramework] = {}
 
-    supported_fwks: list[str] = [c.value.lower() for c in get_system_capabilities().keys()]
+    supported_fwks: tuple[str] = (
+        [c.value.lower() for c in get_system_capabilities().keys()]
+    )
     nn_directory = Path(os.path.dirname(__file__)).absolute()
     nn_frameworks: list[str] = []
     for dir in os.listdir(nn_directory):
@@ -101,7 +103,7 @@ def import_frameworks() -> dict[NnFrameworkType, NnFramework]:
 
         # Check structure
         is_candidate = True
-        for folder in ('model', 'inference'):
+        for folder in ('archs', 'inference'):
             if not os.path.isdir(os.path.join(nn_fwk_dir, folder)):
                 is_candidate = False
 

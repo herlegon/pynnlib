@@ -24,7 +24,6 @@ if TYPE_CHECKING:
 import cupy as cp
 from torch import (
     from_dlpack,
-    to_dlpack,
     Tensor,
 )
 

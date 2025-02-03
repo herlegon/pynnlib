@@ -1,7 +1,7 @@
 from collections import OrderedDict
-from .model.arch import MODEL_ARCHITECTURES
-from .model.parser import get_model_arch
-from .model.save import save
+from .archs.arch import MODEL_ARCHITECTURES
+from .archs.parser import get_model_arch
+from .archs.save import save
 from .inference.session import OnnxSession
 from pynnlib.framework import (
     NnFramework,
