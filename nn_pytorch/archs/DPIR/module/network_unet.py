@@ -4,7 +4,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
 import numpy as np
-from .basicblock import (
+from ..._shared.basicblock import (
+    PixelUnShuffle,
     conv,
     downsample_maxpool,
     downsample_avgpool,
@@ -159,7 +160,16 @@ class UNetRes(nn.Module):
 
 
 class ResUNet(nn.Module):
-    def __init__(self, in_nc=1, out_nc=1, nc=[64, 128, 256, 512], nb=4, act_mode='L', downsample_mode='strideconv', upsample_mode='convtranspose'):
+    def __init__(
+        self,
+        in_nc: int = 1,
+        out_nc: int = 1,
+        nc: tuple[int] = [64, 128, 256, 512],
+        nb: int = 4,
+        act_mode: str = "L",
+        downsample_mode: Literal['avgpool', 'maxpool', 'strideconv'] = 'strideconv',
+        upsample_mode: Literal['upconv', 'pixelshuffle', 'convtranspose'] = 'convtranspose'
+    ):
         super(ResUNet, self).__init__()
 
         self.m_head = conv(in_nc, nc[0], bias=False, mode='C')
@@ -197,11 +207,11 @@ class ResUNet(nn.Module):
         self.m_tail = conv(nc[0], out_nc, bias=False, mode='C')
 
     def forward(self, x):
-
         h, w = x.size()[-2:]
-        paddingBottom = int(np.ceil(h/8)*8-h)
-        paddingRight = int(np.ceil(w/8)*8-w)
-        x = nn.ReplicationPad2d((0, paddingRight, 0, paddingBottom))(x)
+        modulo: int = 8
+        mod_pad_h: int = (modulo - h % modulo) % modulo
+        mod_pad_w: int = (modulo - w % modulo) % modulo
+        x = nn.ReplicationPad2d((0, mod_pad_w, 0, mod_pad_h))(x)
 
         x1 = self.m_head(x)
         x2 = self.m_down1(x1)
@@ -222,7 +232,7 @@ class UNetResSubP(nn.Module):
     def __init__(self, in_nc=1, out_nc=1, nc=[64, 128, 256, 512], nb=2, act_mode='R', downsample_mode='strideconv', upsample_mode='convtranspose'):
         super(UNetResSubP, self).__init__()
         sf = 2
-        self.m_ps_down = B.PixelUnShuffle(sf)
+        self.m_ps_down = PixelUnShuffle(sf)
         self.m_ps_up = nn.PixelShuffle(sf)
         self.m_head = conv(in_nc*sf*sf, nc[0], mode='C'+act_mode[-1])
 

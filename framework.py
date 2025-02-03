@@ -45,7 +45,9 @@ class NnFramework:
         try:
             return self.get_arch(model, self.architectures, device)
         except:
+            return self.get_arch(model, self.architectures, device)
             nnlogger.error(f"[E] architecture not found for {model}")
+
         return (None, None)
 
 
@@ -117,7 +119,7 @@ def import_frameworks() -> dict[NnFrameworkType, NnFramework]:
         detected_fwks.append((fwk_module_name, init_file))
 
     # Load modules
-    def add_framework(frameworks, fwk: NnFramework) -> None:
+    def _append_framework(frameworks, fwk: NnFramework) -> None:
         """Add a framework to the database.
         """
         fwk_key: NnFrameworkType = fwk.type
@@ -137,6 +139,7 @@ def import_frameworks() -> dict[NnFrameworkType, NnFramework]:
         if fwk_module_name in sys.modules:
             # nnlogger.debug(f"{fwk_module_name!r} already in sys.modules")
             is_already_loaded = True
+
         elif (module_spec := importlib.util.spec_from_file_location(fwk_module_name, init_file)) is not None:
             module = importlib.util.module_from_spec(module_spec)
             sys.modules[fwk_module_name] = module
@@ -154,7 +157,7 @@ def import_frameworks() -> dict[NnFrameworkType, NnFramework]:
         if (hasattr(module, "FRAMEWORK")
             and getattr(module, "FRAMEWORK") is not None):
             fwk: NnFramework = module.FRAMEWORK
-            add_framework(frameworks=frameworks, fwk=fwk)
+            _append_framework(frameworks=frameworks, fwk=fwk)
 
         elif not is_already_loaded:
             del sys.modules[fwk_module_name]

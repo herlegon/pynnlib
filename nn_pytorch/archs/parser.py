@@ -54,11 +54,17 @@ def get_model_arch(
     state_dict = None
     try:
         if extension == ".pt":
-            script_module: torch.jit.ScriptModule = torch.jit.load(
+            # script_module: torch.jit.ScriptModule = torch.jit.load(
+            #     model_path,
+            #     map_location=device
+            # )
+            # state_dict = script_module.state_dict()
+            state_dict = torch.load(
                 model_path,
-                map_location=device
+                map_location=device,
+                pickle_module=RestrictedUnpickle,
             )
-            state_dict = script_module.state_dict()
+
 
         elif extension == ".pth":
             state_dict = torch.load(

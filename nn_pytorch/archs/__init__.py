@@ -48,12 +48,13 @@ def import_model_architectures() -> list[NnPytorchArchitecture]:
     # Import modules
     for arch, arch_module_name, init_file in detected_archs:
         if arch_module_name in sys.modules:
-            # nnlogger.debug(f"architecture {arch_module_name!r} already in sys.modules")
+            nnlogger.debug(f"architecture {arch_module_name!r} already in sys.modules")
             module = sys.modules[arch_module_name]
+
         elif (module_spec := importlib.util.spec_from_file_location(arch_module_name, init_file)) is not None:
             module = importlib.util.module_from_spec(module_spec)
             sys.modules[arch_module_name] = module
-            # nnlogger.debug(f"load {arch_module_name!r} from {module}")
+            nnlogger.debug(f"load {arch_module_name!r} from {module}")
             module_spec.loader.exec_module(module)
             # nnlogger.debug(f"{arch_module_name!r} has been imported")
         # else:
