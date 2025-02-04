@@ -6,10 +6,11 @@
 import numpy as np
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
+from torch import Tensor
 from einops import rearrange
 from einops.layers.torch import Rearrange
 from timm.layers import DropPath, trunc_normal_
+from ..._shared.pad import pad, unpad
 
 
 class WMSA(nn.Module):
@@ -91,7 +92,7 @@ class WMSA(nn.Module):
         return output
 
     def relative_embedding(self):
-        cord = torch.tensor(np.array([[i, j] for i in range(self.window_size) for j in range(self.window_size)]))
+        cord = tensor(np.array([[i, j] for i in range(self.window_size) for j in range(self.window_size)]))
         relation = cord[:, None, :] - cord[None, :, :] + self.window_size -1
         # negative is allowed
         return self.relative_position_params[:, relation[:,:,0].long(), relation[:,:,1].long()]
@@ -234,14 +235,9 @@ class SCUNet(nn.Module):
         # self.apply(self._init_weights)
 
 
-    def forward(self, x0: torch.Tensor) -> torch.Tensor:
-        # todo: use channels_last
-        w = x0.shape[3] if x0.shape[1] <= 3 else x0.shape[1]
-        h = x0.shape[2]
-
-        mod_pad_h: int = (64 - h % 64) % 64
-        mod_pad_w: int = (64 - w % 64) % 64
-        x0 = F.pad(x0, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+    def forward(self, x0: Tensor) -> Tensor:
+        size = x.shape[2:]
+        x0 = pad(x, modulo=64, mode='reflect')
 
         x1 = self.m_head(x0)
         x2 = self.m_down1(x1)
@@ -253,7 +249,7 @@ class SCUNet(nn.Module):
         x = self.m_up1(x + x2)
         x = self.m_tail(x + x1)
 
-        x = x[:, :, :h, :w]
+        x = unpad(x, size, scale=1)
         return x
 
 

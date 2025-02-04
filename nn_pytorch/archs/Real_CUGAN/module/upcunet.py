@@ -1,8 +1,10 @@
+# https://github.com/bilibili/ailab/blob/main/Real-CUGAN/upcunet_v3.py
+
 import torch
 from torch import Tensor, nn as nn
 from torch.nn import functional as F
+from ..._shared.pad import pad, unpad
 
-# https://github.com/bilibili/ailab/blob/main/Real-CUGAN/upcunet_v3.py
 
 class SEBlock(nn.Module):
     def __init__(
@@ -274,7 +276,7 @@ class UpCunet(nn.Module):
     ):
         super().__init__()
 
-        self.mod = 2
+        self.modulo = 2
         if scale == 2:
             self.unet1 = UNet1(in_nc, out_nc, deconv=True)
             self.unet2 = UNet2(in_nc, out_nc, deconv=False)
@@ -283,7 +285,7 @@ class UpCunet(nn.Module):
             self.unet1 = UNet1x3(in_nc, out_nc, deconv=True)
             self.unet2 = UNet2(in_nc, out_nc, deconv=False)
             self.pad = 14
-            self.mod = 4
+            self.modulo = 4
         elif scale == 4:
             self.unet1 = UNet1(in_nc, 64, deconv=True)
             self.unet2 = UNet2(64, 64, deconv=False)
@@ -299,19 +301,15 @@ class UpCunet(nn.Module):
 
 
     def forward(self, x: Tensor) -> Tensor:
+        size = x.shape[2:]
         x = torch.clamp_(x, 0, 1)
-        h, w = x.shape[2:]
 
         if not self.legacy:
             # Should not be inplace operations if requires_grad=True
             x.mul_(0.7).add_(0.15)
         _x: Tensor = x
 
-        pad_h, pad_w = [
-            self.pad + ((d - 1) // self.mod + 1) * self.mod - d
-            for d in (h, w)
-        ]
-        x = F.pad(x, (self.pad, self.pad + pad_w, self.pad, self.pad + pad_h), 'reflect')
+        x = pad(x, modulo=self.modulo, mode='reflect')
 
         x = self.unet1.forward(x)
         x0 = self.unet2.forward(x, self.alpha)
@@ -323,8 +321,7 @@ class UpCunet(nn.Module):
             x = F.pad(x, (-1, -1, -1, -1))
             x = self.ps(x)
 
-        if pad_h != 0 or pad_w != 0:
-            x = x[:, :, :h * self.scale, :w * self.scale]
+        x = unpad(x, size, scale=self.scale)
 
         if self.scale == 4:
             x += F.interpolate(_x, scale_factor=self.scale, mode="nearest")

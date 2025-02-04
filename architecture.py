@@ -128,7 +128,7 @@ NnArchitecture = (
 
 GetModelArchFct = Callable[[str | Path, dict[str, Any]], tuple[str, Any]]
 
-def find_model_arch(
+def detect_model_arch(
     model: Any,
     architectures: dict[str, NnArchitecture]
 ) -> NnArchitecture:
@@ -146,4 +146,5 @@ def find_model_arch(
             # Use a customized function for detection
             if detect_fct(model):
                 return arch
+
     return None

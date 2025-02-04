@@ -1,12 +1,13 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torch import Tensor
 from torch.nn.init import trunc_normal_
 from typing import Sequence, Literal
 from functools import partial
 
 
-def repeat_interleave(x: torch.Tensor, n):
+def repeat_interleave(x: Tensor, n):
     x = x.unsqueeze(2)
     x = x.repeat(1, 1, n, 1, 1)
     x = x.reshape(x.shape[0], x.shape[1] * n, x.shape[3], x.shape[4])
@@ -56,7 +57,7 @@ class PLKConv2d(nn.Module):
         self.idx = dim
         self.is_convert = False
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         if self.is_convert:
             x[:, :self.idx] = self.conv(x[:, :self.idx])
             return x
@@ -103,7 +104,7 @@ class RectSparsePLKConv2d(nn.Module):
         trunc_normal_(self.nm_conv.weight, std=0.02)
         trunc_normal_(self.nn_conv.weight, std=0.02)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:  # No reparametrization since this is for a ablative study
+    def forward(self, x: Tensor) -> Tensor:  # No reparametrization since this is for a ablative study
         if self.training:
             x1, x2 = x[:, :self.idx], x[:, self.idx:]
             x1 = self.mn_conv(x1) + self.nm_conv(x1) + self.nn_conv(x1)
@@ -139,7 +140,7 @@ class SparsePLKConv2d(nn.Module):
         self.idx = dim
         self.is_convert = False
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         if self.is_convert:
             x[:, :self.idx, :, :] = self.conv(x[:, :self.idx, :, :])
             return x
@@ -242,7 +243,7 @@ class EA(nn.Module):
         )
         trunc_normal_(self.f[0].weight, std=0.02)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return x * self.f(x)
 
 
@@ -292,7 +293,7 @@ class PLKBlock(nn.Module):
         self.refine = nn.Conv2d(dim, dim, 1, 1, 0)
         trunc_normal_(self.refine.weight, std=0.02)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         x_skip = x
         x = self.channe_mixer(x)
         x = self.lk(x)
@@ -345,7 +346,7 @@ class PLKSR(nn.Module):
             torch.repeat_interleave, repeats=upscaling_factor ** 2, dim=1
         )
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         x = self.feats(x) + self.repeat_op(x)
         x = self.to_img(x)
         return x

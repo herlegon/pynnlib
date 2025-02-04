@@ -19,7 +19,7 @@ from ..._shared.basicblock import (
     upsample_upconv,
     upsample_pixelshuffle,
 )
-
+from ..._shared.pad import pad, unpad
 
 
 class UNet(nn.Module):
@@ -389,13 +389,10 @@ class NonLocalUNet(nn.Module):
 
         self.m_tail = conv(nc[0], out_nc, mode='C')
 
-    def forward(self, x0: Tensor) -> Tensor:
-        w = x0.shape[3] if x0.shape[1] <= 3 else x0.shape[1]
-        h = x0.shape[2]
 
-        mod_pad_h: int = (16 - h % 16) % 16
-        mod_pad_w: int = (16 - w % 16) % 16
-        x0 = F.pad(x0, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+    def forward(self, x0: Tensor) -> Tensor:
+        size = x.shape[2:]
+        x0 = pad(x0, modulo=16, mode='reflect')
 
         x1 = self.m_head(x0)
         x2 = self.m_down1(x1)
@@ -407,6 +404,6 @@ class NonLocalUNet(nn.Module):
         x = self.m_up1(x+x2)
         x = self.m_tail(x+x1) + x0
 
-        x = x[:, :, :h, :w]
+        x = unpad(x, size, scale=1)
         return x
 

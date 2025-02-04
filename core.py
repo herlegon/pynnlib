@@ -77,10 +77,11 @@ class NnLib:
         self,
         model_path: str | Path,
         device: str = 'cpu',
-    ) -> NnModel:
+    ) -> NnModel | None:
         """Open and parse a model and returns its parameters"""
         if not os.path.exists(model_path):
-            raise ValueError(f"[E] {model_path} does not exist")
+            warn(red(f"[E] {model_path} does not exist"))
+            return None
 
         fwk = self.get_framework_from_extension(model_path)
         if fwk is None:

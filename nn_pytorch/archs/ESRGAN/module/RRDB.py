@@ -4,8 +4,9 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-
 from . import block as B
+from ..._shared.pad import pad, unpad
+
 
 class RRDBNet(nn.Module):
     def __init__(
@@ -141,18 +142,14 @@ class RRDBNet(nn.Module):
         x0 : Tensor = x
 
         if self.shuffle_factor:
-            _, _, h, w = x0.size()
-            mod_pad_h = (
-                self.shuffle_factor - h % self.shuffle_factor
-            ) % self.shuffle_factor
-            mod_pad_w = (
-                self.shuffle_factor - w % self.shuffle_factor
-            ) % self.shuffle_factor
-            x0 = F.pad(x0, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+            size = x.shape[2:]
+            x0 = pad(x0, modulo=self.shuffle_factor, mode='reflect')
+
             x0 = torch.pixel_unshuffle(x0, downscale_factor=self.shuffle_factor)
             x0 = self.model(x0)
 
-            out = x0[:, :, : h * self.scale, : w * self.scale]
+            out = unpad(x0, size, scale=self.scale)
+
         else:
             out = self.model(x0)
 

@@ -434,6 +434,7 @@ class UpsampleOneStep(nn.Sequential):
         super(UpsampleOneStep, self).__init__(*m)
 
 
+
 class LAMNet(nn.Module):
     """
     LAMNet (Linear Adaptive Mixer Network) is a neural network architecture designed for image super-resolution tasks.
@@ -510,7 +511,7 @@ class LAMNet(nn.Module):
             if m.bias is not None:
                 nn.init.constant_(m.bias, 0)
 
-    def forward(self, x):
+    def forward(self, x: Tensor) -> Tensor:
         self.mean = self.mean.type_as(x)
         x = x - self.mean
 
@@ -519,68 +520,4 @@ class LAMNet(nn.Module):
 
         x = self.upsample(x)
 
-        x = x + self.mean
-        return x
-
-# if __name__ == "__main__":
-#     upscale = 4
-#     height = 1280 // upscale
-#     width = 720 // upscale
-#     input = torch.randn(1, 3, height, width).cuda()
-
-#     model = LAMNet(
-#         in_chans=3,
-#         num_blocks=6,
-#         num_groups=4,
-#         dim=64,
-#         kernel_size=13,
-#         kernel_loc=[4, 6, 7],
-#         kernel_stride=[1, 2, 4],
-#         num_head=4,
-#         expansion_factor=1.0,
-#         upscale=upscale,
-#         img_range=1.0,
-#         rgb_mean=(0.4488, 0.4371, 0.4040),
-#     ).cuda()
-#     model.eval()
-
-#     with torch.no_grad():
-
-#         from fvcore.nn import FlopCountAnalysis, flop_count_str, flop_count_table
-
-#         flops_count = FlopCountAnalysis(model, (input,))
-#         print(flop_count_str(flops_count))
-
-#         import numpy as np
-#         import tqdm
-
-#         repetitions = 10
-
-#         print("warm up ...\n")
-#         with torch.no_grad():
-#             for _ in range(10):
-#                 _ = model(input)
-
-#         torch.cuda.synchronize()
-
-#         # testing CUDA Event
-#         starter, ender = torch.cuda.Event(enable_timing=True), torch.cuda.Event(
-#             enable_timing=True
-#         )
-#         # initialize
-#         timings = np.zeros((repetitions, 1))
-
-#         print("testing ...\n")
-#         with torch.no_grad():
-#             for rep in tqdm.tqdm(range(repetitions)):
-#                 starter.record()
-#                 _ = model(input)
-#                 ender.record()
-#                 torch.cuda.synchronize()  # wait for ending
-#                 curr_time = starter.elapsed_time(ender)  # from starter to ender (/ms)
-#                 timings[rep] = curr_time
-
-#         avg = timings.sum() / repetitions
-#         print("\navg={}\n".format(avg))
-
-#         print(flop_count_table(flops_count))
+        return x + self.mean

@@ -2,11 +2,11 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torch import Tensor
-
 from .ids import (
     IDSG_A,
     IDSG,
 )
+from ..._shared.pad import pad, unpad
 
 
 def pixelshuffle_block(
@@ -109,18 +109,9 @@ class ASID(nn.Module):
         )
 
 
-    def check_image_size(self, x: Tensor) -> Tensor:
-        h, w = x.size()[2:]
-        modulo: int = 32
-        mod_pad_h = (modulo - h % modulo) % modulo
-        mod_pad_w = (modulo - w % modulo) % modulo
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), 'constant', 0)
-        return x
-
-
     def forward(self, x: Tensor) -> Tensor:
-        h, w = x.size()[2:]
-        x = self.check_image_size(x)
+        size = x.shape[2:]
+        x = pad(x, modulo=32, mode='constant', value=0)
 
         residual = self.input(x)
         out, a1, a2, a3, a4, a5, a6 = self.block0(residual)
@@ -137,5 +128,5 @@ class ASID(nn.Module):
         out = torch.add(self.output(out),residual)
         out = self.up(out)
 
-        out = out[:, :, : h * self.scale, : w * self.scale]
+        out = unpad(out, size, scale=self.scale)
         return  out

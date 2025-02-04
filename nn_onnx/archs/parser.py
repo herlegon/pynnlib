@@ -13,7 +13,7 @@ from typing import Literal
 
 from pynnlib.architecture import (
     NnOnnxArchitecture,
-    find_model_arch
+    detect_model_arch
 )
 from pynnlib.model import OnnxModel
 from .ms_utils import (
@@ -284,7 +284,7 @@ def get_model_arch(
         if isinstance(model_object, str | Path)
         else model_object
     )
-    arch = find_model_arch(onnx_model, architectures)
+    arch = detect_model_arch(onnx_model, architectures)
     return arch, onnx_model
 
 

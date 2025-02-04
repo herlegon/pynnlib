@@ -4,7 +4,7 @@ from pprint import pprint
 from safetensors.torch import load_file
 import torch
 from .unpickler import RestrictedUnpickle
-from pynnlib.architecture import find_model_arch
+from pynnlib.architecture import detect_model_arch
 from pynnlib.model import StateDict
 from pynnlib.utils import get_extension
 from pynnlib.logger import nnlogger
@@ -110,6 +110,6 @@ def get_model_arch(
     state_dict = remove_common_prefix(state_dict)
 
     # Find the architecture
-    arch_name = find_model_arch(state_dict, architectures)
+    arch_name = detect_model_arch(state_dict, architectures)
 
     return arch_name, state_dict

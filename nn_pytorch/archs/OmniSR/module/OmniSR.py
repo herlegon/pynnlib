@@ -15,9 +15,11 @@ from torch import Tensor
 
 from .OSAG import OSAG
 from .pixelshuffle import pixelshuffle_block
+from ..._shared.pad import pad, unpad
+
+
 
 class OmniSR(nn.Module):
-    hyperparameters = {}
 
     def __init__(
         self,
@@ -77,12 +79,8 @@ class OmniSR(nn.Module):
 
 
     def forward(self, x: Tensor) -> Tensor:
-        h, w = x.shape[2:]
-        multiple = self.window_size
-        pad_h = (multiple - h % multiple) % multiple
-        pad_w = (multiple - w % multiple) % multiple
-        if pad_h or pad_w:
-            x = F.pad(x, (0, pad_w, 0, pad_h), "constant", 0.)
+        size = x.shape[2:]
+        x = pad(x, modulo=self.window_size, mode='constant')
 
         residual = self.input(x)
         out = self.residual_layer(residual)
@@ -91,6 +89,5 @@ class OmniSR(nn.Module):
         out = torch.add(self.output(out), residual)
         out = self.up(out)
 
-        if pad_h or pad_w:
-            out = out[:, :, : h * self.scale, : w * self.scale]
+        out = unpad(out, size, scale=self.scale)
         return out

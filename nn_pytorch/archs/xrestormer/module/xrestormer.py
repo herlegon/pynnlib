@@ -7,7 +7,7 @@ import torch.nn.functional as F
 import numbers
 from einops import rearrange
 import math
-
+from ..._shared.pad import pad, unpad
 
 LayerNormType = Literal['BiasFree', 'WithBias']
 
@@ -606,11 +606,8 @@ class XRestormer(nn.Module):
 
 
     def forward(self, x: Tensor) -> Tensor:
-        h, w  = x.shape[2:]
-        modulo: int = 64
-        mod_pad_h: int = (modulo - h % modulo) % modulo
-        mod_pad_w: int = (modulo - w % modulo) % modulo
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
+        size = x.shape[2:]
+        x0 = pad(x0, modulo=64, mode='reflect')
 
         if self.scale > 1:
             x = F.interpolate(
@@ -646,27 +643,6 @@ class XRestormer(nn.Module):
         out_dec_level1 = self.refinement(out_dec_level1)
         out_dec_level1 = self.output(out_dec_level1) + x
 
-        if mod_pad_h or mod_pad_w:
-            out_dec_level1 = out_dec_level1[:, :, :self.scale * h, : self.scale * w]
+        out_dec_level1 = unpad(out_dec_level1, size, scale=self.scale)
 
         return out_dec_level1
-
-# if __name__ == "__main__":
-#     model = XRestormer(
-#         inp_channels=3,
-#         out_channels=3,
-#         dim = 48,
-#         num_blocks = [2,4,4,4],
-#         num_refinement_blocks = 4,
-#         channel_heads= [1,1,1,1],
-#         spatial_heads= [1,2,4,8],
-#         overlap_ratio= [0.5, 0.5, 0.5, 0.5],
-#         ffn_expansion_factor = 2.66,
-#         bias = False,
-#         LayerNorm_type = "WithBias",   # Other option "BiasFree"
-#         dual_pixel_task = False,        # True for dual-pixel defocus deblurring only. Also set inp_channels=6
-#         scale = 1,
-#         )
-
-#     # torchstat
-#     stat(model, (3, 512, 512))

@@ -6,7 +6,7 @@ from pynnlib.session import set_cuda_device
 import tensorrt as trt
 from tensorrt import DataType as TrtDType
 
-from pynnlib.architecture import find_model_arch
+from pynnlib.architecture import detect_model_arch
 from pynnlib.nn_types import NnModelDtype
 from pynnlib.utils.p_print import *
 from pynnlib.model import ShapeStrategy, TrtModel
@@ -24,7 +24,7 @@ def get_model_arch(
     nn_arch_database: dict[str, dict],
     device: str = 'cuda'
 ) -> tuple[str, str | Path | None]:
-    arch_name = find_model_arch(nn_model_path, nn_arch_database)
+    arch_name = detect_model_arch(nn_model_path, nn_arch_database)
     return arch_name, nn_model_path
 
 

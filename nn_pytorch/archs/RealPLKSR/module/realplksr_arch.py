@@ -1,8 +1,8 @@
 from functools import partial
 import torch
 from torch import nn
+from torch import Tensor
 from torch.nn.init import trunc_normal_
-
 from .dysample import DySample
 
 
@@ -28,7 +28,7 @@ class PLKConv2d(nn.Module):
         trunc_normal_(self.conv.weight, std=0.02)
         self.idx = dim
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         if self.training:
             x1, x2 = torch.split(x, [self.idx, x.size(1) - self.idx], dim=1)
             x1 = self.conv(x1)
@@ -45,7 +45,7 @@ class EA(nn.Module):
         self.f = nn.Sequential(nn.Conv2d(dim, dim, 3, 1, 1), nn.Sigmoid())
         trunc_normal_(self.f[0].weight, std=0.02)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         return x * self.f(x)
 
 
@@ -82,7 +82,7 @@ class PLKBlock(nn.Module):
         # Group Normalization
         self.norm = nn.GroupNorm(norm_groups, dim)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+    def forward(self, x: Tensor) -> Tensor:
         x_skip = x
         x = self.channel_mixer(x)
         x = self.lk(x)
@@ -149,6 +149,7 @@ class RealPLKSR(nn.Module):
         else:
             self.to_img = nn.PixelShuffle(upscaling_factor)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
+
+    def forward(self, x: Tensor) -> Tensor:
         x = self.feats(x) + self.repeat_op(x)
         return self.to_img(x)

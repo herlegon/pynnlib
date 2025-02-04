@@ -7,10 +7,10 @@ import math
 
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
+from torch import Tensor
 from timm.layers import DropPath, trunc_normal_, to_2tuple
-
+from ..._shared.pad import pad, unpad
 
 
 class Mlp(nn.Module):
@@ -993,12 +993,6 @@ class SwinIR(nn.Module):
     def no_weight_decay_keywords(self):
         return {"relative_position_bias_table"}
 
-    def check_image_size(self, x):
-        _, _, h, w = x.size()
-        mod_pad_h = (self.window_size - h % self.window_size) % self.window_size
-        mod_pad_w = (self.window_size - w % self.window_size) % self.window_size
-        x = F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
-        return x
 
     def forward_features(self, x):
         x_size = (x.shape[2], x.shape[3])
@@ -1015,9 +1009,9 @@ class SwinIR(nn.Module):
 
         return x
 
-    def forward(self, x):
-        H, W = x.shape[2:]
-        x = self.check_image_size(x)
+    def forward(self, x: Tensor):
+        size = x.shape[2:]
+        x = pad(x, modulo=self.window_size, mode='reflect')
 
         self.mean = self.mean.type_as(x)
         x = (x - self.mean) * self.img_range
@@ -1033,11 +1027,13 @@ class SwinIR(nn.Module):
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.conv_before_upsample(x)
             x = self.conv_last(self.upsample(x))
+
         elif self.upsampler == "pixelshuffledirect":
             # for lightweight SR
             x = self.conv_first(x)
             x = self.conv_after_body(self.forward_features(x)) + x
             x = self.upsample(x)
+
         elif self.upsampler == "nearest+conv":
             # for real-world SR
             x = self.conv_first(x)
@@ -1072,6 +1068,7 @@ class SwinIR(nn.Module):
                     )
                 )
             x = self.conv_last(self.lrelu(self.conv_hr(x)))
+
         else:
             # for image denoising and JPEG compression artifact reduction
             x_first = self.conv_first(x)
@@ -1079,8 +1076,9 @@ class SwinIR(nn.Module):
             x = x + self.conv_last(res)
 
         x = x / self.img_range + self.mean
+        x = unpad(x, size, scale=self.upscale)
+        return x
 
-        return x[:, :, : H * self.upscale, : W * self.upscale]
 
     def flops(self):
         flops = 0
