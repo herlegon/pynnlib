@@ -368,7 +368,6 @@ class RetinexFormer_Single_Stage(nn.Module):
 
 
 class RetinexFormer(nn.Module):
-    hyperparameters = {}
 
     def __init__(
         self,
@@ -401,7 +400,7 @@ class RetinexFormer(nn.Module):
         x: [b,c,h,w]
         return out:[b,c,h,w]
         """
-        size = x.shape[:2]
+        size = x.shape[2:]
         x = pad(x, modulo=8, mode='reflect')
         out: Tensor = self.body(x)
         out = unpad(out, size, scale=1)

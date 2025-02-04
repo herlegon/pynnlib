@@ -64,22 +64,22 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
             max=(3000, 3000),
         )
     ),
-    NnPytorchArchitecture(
-        name='RetinexFormer++',
-        detection_keys=(
-            "body.2.mapping.weight",
-            "conv_in.weight",
-            "body.0.bottleneck.blocks.0.0.rescale",
-            "body.0.encoder_layers.0.0.blocks.0.0.rescale",
-            "body.0.encoder_layers.1.0.blocks.0.0.rescale",
-            "body.0.encoder_layers.1.1.weight",
-        ),
-        parse=parse,
-        to_onnx=to_onnx,
-        dtypes=('fp32', 'fp16'),
-        size_constraint=SizeConstraint(
-            min=(8, 8),
-            max=(3000, 3000),
-        )
-    ),
+    # NnPytorchArchitecture(
+    #     name='MST++',
+    #     detection_keys=(
+    #         "body.2.mapping.weight",
+    #         "conv_in.weight",
+    #         "body.0.bottleneck.blocks.0.0.rescale",
+    #         "body.0.encoder_layers.0.0.blocks.0.0.rescale",
+    #         "body.0.encoder_layers.1.0.blocks.0.0.rescale",
+    #         "body.0.encoder_layers.1.1.weight",
+    #     ),
+    #     parse=parse,
+    #     to_onnx=to_onnx,
+    #     dtypes=('fp32', 'fp16'),
+    #     size_constraint=SizeConstraint(
+    #         min=(8, 8),
+    #         max=(3000, 3000),
+    #     )
+    # ),
 )
