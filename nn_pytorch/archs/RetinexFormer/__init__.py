@@ -3,7 +3,7 @@ from pynnlib.model import PytorchModel
 from ...torch_types import StateDict
 from ..torch_to_onnx import to_onnx
 from ..helpers import get_max_indice
-from .module.RextinexFormer import RetinexFormer
+from .module.RetinexFormer import RetinexFormer
 
 def parse(model: PytorchModel) -> None:
     state_dict: StateDict = model.state_dict
