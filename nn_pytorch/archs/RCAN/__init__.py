@@ -2,41 +2,13 @@ import math
 from pynnlib.architecture import NnPytorchArchitecture, SizeConstraint
 from pynnlib.model import PytorchModel
 from ..helpers import (
-    get_scale_and_out_nc,
     get_max_indice,
+    get_pixelshuffle_params
 )
 from .module.rcan import RCAN
 from ..torch_to_onnx import to_onnx
 from ...torch_types import StateDict
 
-
-def get_pixelshuffle_params(
-    state_dict,
-    upsample_key: str = "upsample",
-    default_nf: int = 64,
-) -> tuple[int, int]:
-    """
-    This will detect the upscale factor and number of features of a pixelshuffle module in the state dict.
-
-    A pixelshuffle module is a sequence of alternating up convolutions and pixelshuffle.
-    The class of this module is commonyl called `Upsample`.
-    Examples of such modules can be found in most SISR architectures, such as SwinIR, HAT, RGT, and many more.
-    """
-    upscale = 1
-    num_feat = default_nf
-
-    for i in range(0, 10, 2):
-        key = f"{upsample_key}.{i}.weight"
-        if key not in state_dict:
-            break
-
-        tensor = state_dict[key]
-        # we'll assume that the state dict contains tensors
-        shape: tuple[int, ...] = tensor.shape  # type: ignore
-        num_feat = shape[1]
-        upscale *= math.isqrt(shape[0] // num_feat)
-
-    return upscale, num_feat
 
 
 

@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pathlib import Path
 from pprint import pprint
+from warnings import warn
 from safetensors.torch import load_file
 import torch
 from .unpickler import RestrictedUnpickle
@@ -90,15 +91,13 @@ def get_model_arch(
                 f"Unsupported model file extension {extension}. Please try a supported model type."
             )
     except:
-        raise ValueError(
+        state_dict = None
+
+    if state_dict is None:
+        warn(
             f"Failed to load model {model_path}."
         )
         return None, None
-
-    if state_dict is None:
-        raise ValueError(
-            f"Failed to load model {model_path}."
-        )
 
     # print(state_dict.keys())
     # print(StateDict.get(state_dict, 'metadata', None))

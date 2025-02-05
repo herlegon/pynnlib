@@ -3,7 +3,7 @@ from collections import OrderedDict
 import glob
 import inspect
 import math
-from pprint import pprint
+from torch import Tensor
 from pynnlib.model import PytorchModel
 from ..torch_types import StateDict
 
@@ -33,15 +33,12 @@ def get_max_indice(state_dict: StateDict, seq_key: str) -> int:
         for k in state_dict.keys()
         if k[:prefix_len] == prefix
     ]
-    max_indice = max(keys) if keys else 0
+    return max(keys) if keys else 0
 
-        # max_indice = max(
-        # int(re.search(re.compile(rf"{seq_key}.(\d+)"), k).group(1))
-        # for k in state_dict
-        # )
-    # print(1000 * (time.time() - start_time))
-    # print(max_indice)
-    return max_indice
+
+def get_nsequences(state_dict: StateDict, seq_key: str) -> int:
+    nsequences: int = get_max_indice(state_dict=state_dict, seq_key=seq_key)
+    return nsequences + 1 if nsequences else 0
 
 
 def get_scale_and_out_nc(x: int, input_channels: int) -> tuple[int, int]:
@@ -72,6 +69,36 @@ def get_scale_and_out_nc(x: int, input_channels: int) -> tuple[int, int]:
         f"Expected output channels to be either 1, 3, or 4."
         f" Could not find a pair (scale, out_nc) such that `scale**2 * out_nc = {x}`"
     )
+
+
+
+def get_pixelshuffle_params(
+    state_dict: StateDict,
+    upsample_key: str = "upsample",
+    default_nf: int = 64,
+) -> tuple[int, int]:
+    """
+    This will detect the upscale factor and number of features of a pixelshuffle module in the state dict.
+
+    A pixelshuffle module is a sequence of alternating up convolutions and pixelshuffle.
+    The class of this module is commonyl called `Upsample`.
+    Examples of such modules can be found in most SISR architectures, such as SwinIR, HAT, RGT, and many more.
+    """
+    upscale = 1
+    num_feat = default_nf
+
+    for i in range(0, 10, 2):
+        key = f"{upsample_key}.{i}.weight"
+        if key not in state_dict:
+            break
+
+        tensor: Tensor = state_dict[key]
+        # we'll assume that the state dict contains tensors
+        shape: tuple[int, ...] = tensor.shape  # type: ignore
+        num_feat = shape[1]
+        upscale *= math.isqrt(shape[0] // num_feat)
+
+    return upscale, num_feat
 
 
 

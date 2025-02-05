@@ -20,7 +20,7 @@ def parse(model: PytorchModel) -> None:
     out_nc: int = 3
     in_nc: int = out_nc
 
-    scale: int = int(math.sqrt(state_dict["up.0.weight"].shape[0] // 3))
+    scale: int = math.isqrt(state_dict["up.0.weight"].shape[0] // 3)
     res_num = _get_max_indice(state_dict, "block") + 1
     is_d8: bool = bool(res_num == 8)
     num_feat: int = state_dict["block0.res_end.bias"].shape[0]

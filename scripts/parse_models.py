@@ -123,6 +123,8 @@ def main():
             try:
                 start_time= time.time()
                 model: NnModel = nnlib.open(filepath, device)
+                if model is None:
+                    continue
                 elapsed = time.time() - start_time
                 print(
                     f"\tarch:", lightcyan(model.arch_name),
