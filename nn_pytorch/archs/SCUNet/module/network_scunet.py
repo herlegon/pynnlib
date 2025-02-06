@@ -92,7 +92,7 @@ class WMSA(nn.Module):
         return output
 
     def relative_embedding(self):
-        cord = tensor(np.array([[i, j] for i in range(self.window_size) for j in range(self.window_size)]))
+        cord = torch.tensor(np.array([[i, j] for i in range(self.window_size) for j in range(self.window_size)]))
         relation = cord[:, None, :] - cord[None, :, :] + self.window_size -1
         # negative is allowed
         return self.relative_position_params[:, relation[:,:,0].long(), relation[:,:,1].long()]
@@ -236,8 +236,8 @@ class SCUNet(nn.Module):
 
 
     def forward(self, x0: Tensor) -> Tensor:
-        size = x.shape[2:]
-        x0 = pad(x, modulo=64, mode='reflect')
+        size = x0.shape[2:]
+        x0 = pad(x0, modulo=64, mode='reflect')
 
         x1 = self.m_head(x0)
         x2 = self.m_down1(x1)
