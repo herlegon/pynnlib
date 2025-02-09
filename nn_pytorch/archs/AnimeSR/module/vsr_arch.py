@@ -96,7 +96,7 @@ class MSRSWVSR(nn.Module):
         self.netscale = netscale
 
 
-    def forward(self, x: Tensor, fb, state: Tensor) -> tuple[Tensor, Tensor]:
+    def forward(self, x: Tensor, fb: Tensor, state: Tensor) -> tuple[Tensor, Tensor]:
         res = x[:, 3:6]
         # pre frame, cur frame, nxt frame, pre sr frame, pre hidden state
         inp = torch.cat((x, pixel_unshuffle(fb, self.netscale), state), dim=1)

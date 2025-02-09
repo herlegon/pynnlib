@@ -5,6 +5,7 @@ import torchvision
 import warnings
 from itertools import repeat
 from torch import nn as nn
+from torch import Tensor
 from torch.nn import functional as F
 from torch.nn import init as init
 from torch.nn.modules.batchnorm import _BatchNorm
@@ -181,7 +182,7 @@ def resize_flow(flow, size_type, sizes, interp_mode='bilinear', align_corners=Fa
 
 
 # TODO: may write a cpp file
-def pixel_unshuffle(x, scale):
+def pixel_unshuffle(x: Tensor, scale):
     """ Pixel unshuffle.
 
     Args:

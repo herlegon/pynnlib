@@ -53,9 +53,8 @@ class PyTorchSession(GenericSession):
             self._process_fct = self._torch_process_inpaint
 
         elif (
-            infer_type.type != 'simple'
-            or infer_type.inputs != 1
-            or infer_type.outputs != 1
+            infer_type.type != 'temporal'
+            and (infer_type.inputs != 1 or infer_type.outputs != 1)
         ):
             raise NotImplementedError(f"Cannot create a session for arch {model.arch_name} ")
 

@@ -77,8 +77,8 @@ def compile_bias_act_ext(verbose: bool = False):
 
         return None
 
-    else:
-        raise RuntimeError("should be runned onlyce once")
+    # else:
+    #     raise RuntimeError("should be runned onlyce once")
 
 # compile_bias_act_ext()
 
