@@ -10,8 +10,6 @@ from ..torch_to_onnx import to_onnx
 from ...torch_types import StateDict
 
 
-
-
 def parse(model: PytorchModel) -> None:
     state_dict: StateDict = model.state_dict
 

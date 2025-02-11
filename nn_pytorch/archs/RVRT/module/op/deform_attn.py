@@ -61,7 +61,7 @@ def compile_deform_attn_ext(verbose: bool = False):
     # else:
     #     raise RuntimeError("should be runned onlyce once")
 
-compile_deform_attn_ext(verbose=True)
+# compile_deform_attn_ext(verbose=True)
 
 
 
