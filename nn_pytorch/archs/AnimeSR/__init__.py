@@ -12,7 +12,6 @@ from ..torch_to_onnx import to_onnx
 
 def parse(model: PytorchModel) -> None:
     recurrent_cell_shape = model.state_dict[f"recurrent_cell.conv_s1_first.0.weight"].shape
-    print(recurrent_cell_shape)
     in_nc: int = recurrent_cell_shape[3]
     num_feat: int = recurrent_cell_shape[0]
     scale: int = int(

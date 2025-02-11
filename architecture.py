@@ -29,7 +29,12 @@ ParseFunction = Callable[[NnModel], None]
 
 @dataclass(slots=True)
 class InferType:
-    type: Literal['simple', 'inpaint', 'temporal'] = 'simple'
+    type: Literal[
+        'simple',
+        'inpaint',
+        'temporal',
+        'optical_flow'
+    ] = 'simple'
     inputs: int = 1
     outputs: int = 1
 
