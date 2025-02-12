@@ -72,23 +72,6 @@ def parse(model: PytorchModel) -> None:
         feature_channels=feature_channels
     )
     # padding_factor = 32
-    # for debug
-    # model.module = UniMatch(
-    #     task=task,
-    #     reg_refine=is_refine,
-    #     num_scales=num_scale,
-    #     upsample_factor=scale
-    # )
-    # model.module.to('cpu')
-    # model.module.load_state_dict(model.state_dict, strict=False)
-    # for _, v in model.module.named_parameters():
-    #     v.requires_grad = False
-    # from torchinfo import summary
-    # summary(model.module,
-    #         img1=(1, 3, 128, 128),
-    #         img2=(1, 3, 128, 128),
-    #     verbose=True)
-
 
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
