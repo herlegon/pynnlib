@@ -14,6 +14,7 @@ from operator import mul
 from einops import rearrange
 from einops.layers.torch import Rearrange
 
+from ..._shared.basicsr_utils import flow_warp
 from .SPyNet import SpyNet
 from .op.deform_attn import deform_attn, DeformAttnPack
 
