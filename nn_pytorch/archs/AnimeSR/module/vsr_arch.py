@@ -3,7 +3,11 @@ from torch import nn as nn
 from torch.nn import functional as F
 from torch import Tensor
 
-from .arch_util import ResidualBlockNoBN, pixel_unshuffle
+from ..._shared.basicsr_utils import (
+    ResidualBlockNoBN,
+    pixel_unshuffle,
+)
+
 
 
 class RightAlignMSConvResidualBlocks(nn.Module):

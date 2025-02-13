@@ -3,9 +3,6 @@
 # This source code is licensed under the BSD license found in the
 # LICENSE file in the root directory of this source tree.
 
-
-import os
-import warnings
 import math
 import torch
 import torch.nn as nn
@@ -17,11 +14,11 @@ from operator import mul
 from einops import rearrange
 from einops.layers.torch import Rearrange
 
-from ...SPyNet.module.SPyNet import SpyNet
+from .SPyNet import SpyNet
 from .op.deform_attn import deform_attn, DeformAttnPack
 
 
-def make_layer(block, num_blocks, **kwarg):
+def _make_layer(block, num_blocks, **kwarg):
     """Make layers by stacking the same blocks.
 
     Args:
@@ -547,7 +544,7 @@ class RSTBWithInputConv(nn.Module):
         # RSTB blocks
         kwargs['use_checkpoint_attn'] = kwargs.pop('use_checkpoint_attn')[0]
         kwargs['use_checkpoint_ffn'] = kwargs.pop('use_checkpoint_ffn')[0]
-        main.append(make_layer(RSTB, num_blocks, **kwargs))
+        main.append(_make_layer(RSTB, num_blocks, **kwargs))
 
         main += [Rearrange('n c d h w -> n d h w c'),
                  nn.LayerNorm(kwargs['dim']),
