@@ -22,17 +22,21 @@ curdir = os.path.split(__file__)[0]
 import torch
 from torch.utils.cpp_extension import load
 
-if torch.cuda.is_available():
+# if torch.cuda.is_available():
 
-    TMPWrapper = load(name="TemporalMotionPropagation",
-                       sources=[os.path.join(curdir, "tmpwrapper.cpp"), 
-                                os.path.join(curdir, "tmp.cu")],
-                       verbose=True)
+#     TMPWrapper = load(name="TemporalMotionPropagation",
+#                        sources=[os.path.join(curdir, "tmpwrapper.cpp"),
+#                                 os.path.join(curdir, "tmp.cu")],
+#                        verbose=True)
 
-    def tmp(feat, feat_pre, offsets, offsets_pre, distance, iters_t=30, sigma=30, iters_s=1, additional_jump=2):
-        c, height, width = feat.shape
-        return TMPWrapper.TemporalMotionPropagation(feat,feat_pre,offsets,offsets_pre,distance,height,width,c,iters_t,sigma,iters_s,additional_jump)
+#     def tmp(feat, feat_pre, offsets, offsets_pre, distance, iters_t=30, sigma=30, iters_s=1, additional_jump=2):
+#         c, height, width = feat.shape
+#         return TMPWrapper.TemporalMotionPropagation(feat,feat_pre,offsets,offsets_pre,distance,height,width,c,iters_t,sigma,iters_s,additional_jump)
 
-else: # only for test currently
-    def tmp(feat, feat_pre, offsets, offsets_pre, distance, iters_t=30, sigma=30, iters_s=1, additional_jump=2):
-        return None
+# else: # only for test currently
+#     def tmp(feat, feat_pre, offsets, offsets_pre, distance, iters_t=30, sigma=30, iters_s=1, additional_jump=2):
+#         return None
+
+def tmp(feat, feat_pre, offsets, offsets_pre, distance, iters_t=30, sigma=30, iters_s=1, additional_jump=2):
+    raise NotImplementedError("Compilation of TMPWrapper to do")
+    return None
