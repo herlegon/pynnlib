@@ -6,9 +6,10 @@ from ..._shared.basicsr_utils import (
     default_init_weights,
     flow_warp,
     make_layer,
-    ResidualBlockNoBN,
+    ConvResidualBlocks,
 )
 from .degradation_aware import Ranker_128_up
+from .dcn import ModulatedDeformConvPack
 
 
 class SFTLayer_torch_1x1(nn.Module):
@@ -72,7 +73,12 @@ class CAVSR(nn.Module):
         spynet_path (str): Path to the pretrained weights of SPyNet. Default: None.
     """
 
-    def __init__(self, num_feat=64, num_block=15):    # , spynet_path=None):
+    def __init__(
+        self,
+        num_feat: int = 64,
+        num_block: int = 15,
+        encoder_fp: str = "",
+    ):
         super().__init__()
         self.num_feat = num_feat
 
@@ -80,7 +86,7 @@ class CAVSR(nn.Module):
         # self.spynet = SpyNet(spynet_path)
 
         self.encoder = Ranker_128_up()
-        checkpoint = torch.load(r"./ranker.pth")
+        checkpoint = torch.load(encoder_fp)
         self.encoder.load_state_dict({k.replace('module.',''):v for k,v in checkpoint.items()})
         print('encoder model loading done!')
 
@@ -265,23 +271,6 @@ class CAVSR(nn.Module):
         else:
             return torch.stack(out_t, dim=1)
 
-class ConvResidualBlocks(nn.Module):
-    """Conv and residual block used in BasicVSR.
-
-    Args:
-        num_in_ch (int): Number of input channels. Default: 3.
-        num_out_ch (int): Number of output channels. Default: 64.
-        num_block (int): Number of residual blocks. Default: 15.
-    """
-
-    def __init__(self, num_in_ch=3, num_out_ch=64, num_block=15):
-        super().__init__()
-        self.main = nn.Sequential(
-            nn.Conv2d(num_in_ch, num_out_ch, 3, 1, 1, bias=True), nn.LeakyReLU(negative_slope=0.1, inplace=True),
-            make_layer(ResidualBlockNoBN, num_block, num_feat=num_out_ch))
-
-    def forward(self, fea):
-        return self.main(fea)
 
 class sft_net(nn.Module):
     """Conv and residual block used in BasicVSR.
@@ -305,7 +294,6 @@ class sft_net(nn.Module):
         return fea + x
 
 
-from basicsr.ops.dcn import ModulatedDeformConvPack
 class SecondOrderDeformableAlignment(ModulatedDeformConvPack):
     def __init__(self, *args, **kwargs):
         self.max_residue_magnitude = kwargs.pop('max_residue_magnitude', 10)

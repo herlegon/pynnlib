@@ -11,6 +11,8 @@ from ...torch_types import StateDict
 from ..helpers import get_nsequences
 from .module.unimatch import UniMatch
 
+# Impossible to differentiate unimatch from GMFlow
+
 def parse(model: PytorchModel) -> None:
     state_dict: StateDict = model.state_dict
     scale: int = 8

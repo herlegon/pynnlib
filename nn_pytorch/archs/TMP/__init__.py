@@ -1,4 +1,3 @@
-import math
 from pynnlib.architecture import NnPytorchArchitecture, SizeConstraint
 from pynnlib.model import PytorchModel
 from ...torch_types import StateDict
@@ -6,24 +5,22 @@ from ..helpers import (
     get_nsequences,
 )
 from ..torch_to_onnx import to_onnx
-from .module.CAVSR import CAVSR
+from .module.TMP_arch import TMP
 
 
 def parse(model: PytorchModel) -> None:
     state_dict: StateDict = model.state_dict
-    scale: int = 4
-    in_nc: int = 3
-    out_nc: int = 3
-    num_feat: int = 64
-    num_block: int = 25
 
-    num_feat = state_dict["backward_trunk.main.0.weight"].shape[0]
+    # default
+    num_feat: int = 64
+    num_extract_block: int = 3
+    hr_in: bool = False
+
+    in_nc, num_feat = state_dict["conv_first.weight"].shape[:2]
     out_nc = in_nc
     # scale is fixed
     scale: int = 4
-    num_block = get_nsequences(state_dict, "backward_trunk.main.2")
-
-    encoder_fp: str = "ranker.pth"
+    num_extract_block = get_nsequences(state_dict, "feature_extraction")
 
     model.update(
         arch_name=model.arch.name,
@@ -31,23 +28,24 @@ def parse(model: PytorchModel) -> None:
         in_nc=in_nc,
         out_nc=out_nc,
 
-        ModuleClass=CAVSR,
+        ModuleClass=TMP,
+        num_in_ch=in_nc,
         num_feat=num_feat,
-        num_block=num_block,
-        encoder_fp=encoder_fp
+        num_extract_block=num_extract_block,
+        hr_in=hr_in
     )
 
 
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name="CAVSR",
+        name="TMP",
         detection_keys=(
-            "encoder.E.E.0.weight",
-            "backward_trunk.main.0.weight",
-            "modulate_f.conv2.weight",
-            "fusion.0.weight",
-            "backward_trunk.main.2.0.conv1.weight"
+            "align.convs.0.weight",
+            "align.reconstruction.0.conv1.weight",
+            "feature_extraction.0.conv1.weight",
+            "conv_first.weight",
+            "upconv1.weight",
         ),
         parse=parse,
         to_onnx=to_onnx,

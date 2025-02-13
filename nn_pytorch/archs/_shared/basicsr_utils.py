@@ -142,3 +142,22 @@ class ResidualBlockNoBN(nn.Module):
         out = self.conv2(self.relu(self.conv1(x)))
         return identity + out * self.res_scale
 
+
+
+class ConvResidualBlocks(nn.Module):
+    """Conv and residual block used in BasicVSR.
+
+    Args:
+        num_in_ch (int): Number of input channels. Default: 3.
+        num_out_ch (int): Number of output channels. Default: 64.
+        num_block (int): Number of residual blocks. Default: 15.
+    """
+
+    def __init__(self, num_in_ch=3, num_out_ch=64, num_block=15):
+        super().__init__()
+        self.main = nn.Sequential(
+            nn.Conv2d(num_in_ch, num_out_ch, 3, 1, 1, bias=True), nn.LeakyReLU(negative_slope=0.1, inplace=True),
+            make_layer(ResidualBlockNoBN, num_block, num_feat=num_out_ch))
+
+    def forward(self, fea):
+        return self.main(fea)
