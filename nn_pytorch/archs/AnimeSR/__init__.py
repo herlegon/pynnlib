@@ -6,8 +6,8 @@ from pynnlib.architecture import (
 )
 from pynnlib.model import PytorchModel
 from utils.p_print import *
-from .module.vsr_arch import MSRSWVSR
 from ..torch_to_onnx import to_onnx
+from .module.vsr_arch import MSRSWVSR
 
 
 def parse(model: PytorchModel) -> None:

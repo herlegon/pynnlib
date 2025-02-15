@@ -1,4 +1,3 @@
-import math
 from pynnlib.architecture import NnPytorchArchitecture, SizeConstraint
 from pynnlib.model import PytorchModel
 from ...torch_types import StateDict

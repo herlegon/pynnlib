@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.utils.checkpoint as checkpoint
-from timm.models.layers import trunc_normal_
+from timm.layers import trunc_normal_
 from functools import lru_cache
 
 
@@ -110,8 +110,8 @@ class WindowAttention(nn.Module):
         super().__init__()
         self.dim = dim
         self.window_size = window_size  # Wh, Ww
-        self.num_heads = num_heads  
-        head_dim = dim // num_heads  
+        self.num_heads = num_heads
+        head_dim = dim // num_heads
         self.scale = qk_scale or head_dim**-0.5
 
         # define a parameter table of relative position bias
@@ -367,7 +367,7 @@ class BasicLayer(nn.Module):
                  num_frames=5):
 
         super().__init__()
-        self.dim = dim  
+        self.dim = dim
         self.input_resolution = input_resolution  #64,64
         self.depth = depth
         self.use_checkpoint = use_checkpoint
@@ -467,8 +467,8 @@ class RSTB(nn.Module):
                  num_frames=5):
         super(RSTB, self).__init__()
 
-        self.dim = dim  
-        self.input_resolution = input_resolution  
+        self.dim = dim
+        self.input_resolution = input_resolution
         self.num_frames=num_frames
         self.residual_group = BasicLayer(
             dim=dim,
@@ -547,8 +547,8 @@ class PatchEmbed(nn.Module):
         self.num_patches = patches_resolution[0] * patches_resolution[1]
         self.num_frames = num_frames
 
-        self.in_chans = in_chans  
-        self.embed_dim = embed_dim  
+        self.in_chans = in_chans
+        self.embed_dim = embed_dim
 
         if norm_layer is not None:
             self.norm = norm_layer(embed_dim)
@@ -637,7 +637,7 @@ def compute_mask(t, x_size, window_size, shift_size, device):
     Hp = int(np.ceil(h / window_size[1])) * window_size[1]
     Wp = int(np.ceil(w / window_size[2])) * window_size[2]
     img_mask = torch.zeros((1, Dp, Hp, Wp, 1), device=device)  # 1 h w 1
-    
+
     cnt = 0
     for d in slice(-window_size[0]), slice(-window_size[0], -shift_size[0]), slice(-shift_size[0],None):
         for h in slice(-window_size[1]), slice(-window_size[1], -shift_size[1]), slice(-shift_size[1],None):
@@ -723,12 +723,12 @@ class SwinIRFM(nn.Module):
         self.conv_first_feat = nn.Conv2d(num_feat, embed_dim, 3, 1, 1)
         #self.feature_extraction = make_layer(ResidualBlockNoBN, num_blocks_extraction, mid_channels=embed_dim)
 
-        self.num_layers = len(depths)  
-        self.embed_dim = embed_dim  
+        self.num_layers = len(depths)
+        self.embed_dim = embed_dim
         self.ape = ape
         self.patch_norm = patch_norm
-        self.num_features = embed_dim  
-        self.mlp_ratio = mlp_ratio  
+        self.num_features = embed_dim
+        self.mlp_ratio = mlp_ratio
 
         # split image into non-overlapping patches
         self.patch_embed = PatchEmbed(
