@@ -30,7 +30,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='RealESRGAN (Compact)',
+        name="RealESRGAN (Compact)",
         detection_keys=(
             "body.0.weight",
             "body.1.weight"

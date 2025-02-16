@@ -124,7 +124,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='DAT',
+        name="DAT",
         detection_keys=(
             "conv_first.weight",
             "layers.0.blocks.0.ffn.fc1.weight"

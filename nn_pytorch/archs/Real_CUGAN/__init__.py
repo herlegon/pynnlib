@@ -113,7 +113,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='Real_CUGAN',
+        name="Real_CUGAN",
         detection_keys=(
             "unet1.conv1.conv.0.weight",
             "unet1.conv_bottom.weight",

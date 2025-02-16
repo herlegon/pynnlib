@@ -25,7 +25,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='SPyNet',
+        name="SPyNet",
         detection_keys=(
             "basic_module.0.basic_module.0.weight",
             "basic_module.3.basic_module.0.weight",

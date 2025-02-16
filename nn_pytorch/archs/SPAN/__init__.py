@@ -57,7 +57,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='SPAN',
+        name="SPAN",
         detection_keys=(
             "conv_1.sk.weight",
             "block_1.c1_r.sk.weight",

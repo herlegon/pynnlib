@@ -35,7 +35,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='SCUNet',
+        name="SCUNet",
         detection_keys=(
             "m_head.0.weight",
             "m_tail.0.weight"

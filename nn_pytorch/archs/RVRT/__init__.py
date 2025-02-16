@@ -173,7 +173,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='RVRT',
+        name="RVRT",
         detection_keys=(
             "spynet.basic_module.0.basic_module.0.weight",
             "deform_align.backward_1.proj_q.1.weight",

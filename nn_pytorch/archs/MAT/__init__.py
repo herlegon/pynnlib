@@ -149,7 +149,7 @@ def to_onnx_inpaint(
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='MAT inpainting',
+        name="MAT inpainting",
         detection_keys=(
             "synthesis.first_stage.conv_first.conv.resample_filter",
             "model.synthesis.first_stage.conv_first.conv.resample_filter",

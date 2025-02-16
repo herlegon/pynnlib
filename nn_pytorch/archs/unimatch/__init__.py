@@ -78,7 +78,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='unimatch',
+        name="unimatch",
         detection_keys=(
             # "refine.encoder.convc1.weight",
             "feature_flow_attn.q_proj.weight",

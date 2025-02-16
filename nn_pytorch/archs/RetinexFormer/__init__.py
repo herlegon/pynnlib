@@ -47,7 +47,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='RetinexFormer',
+        name="RetinexFormer",
         detection_keys=(
             "body.0.denoiser.mapping.weight",
             "body.0.denoiser.embedding.weight",

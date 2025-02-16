@@ -51,7 +51,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='ASIDd8',
+        name="ASIDd8",
         detection_keys=(
             "block7.res_end.weight"
             "block2.res_end.weight",
@@ -66,7 +66,7 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
         )
     ),
     NnPytorchArchitecture(
-        name='ASID',
+        name="ASID",
         detection_keys=(
             "block2.res_end.weight",
             "block0.res_end.weight",

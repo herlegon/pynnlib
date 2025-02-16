@@ -68,7 +68,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='OmniSR',
+        name="OmniSR",
         detection_keys=(
             "residual_layer.0.residual_layer.0.layer.0.fn.0.weight",
             "input.weight",

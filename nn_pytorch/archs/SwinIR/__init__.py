@@ -151,7 +151,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='SwinIR',
+        name="SwinIR",
         detection_keys=(
             "layers.0.residual_group.blocks.0.norm1.weight",
             "conv_first.weight",

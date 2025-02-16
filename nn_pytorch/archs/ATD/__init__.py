@@ -90,7 +90,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='ATD',
+        name="ATD",
         detection_keys=(
             "relative_position_index_SA",
             "conv_first.weight",

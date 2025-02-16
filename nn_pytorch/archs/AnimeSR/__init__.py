@@ -34,7 +34,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='AnimeSR',
+        name="AnimeSR",
         detection_keys=(
             "recurrent_cell.conv_s1_first.0.weight",
             "recurrent_cell.fusion.0.weight",

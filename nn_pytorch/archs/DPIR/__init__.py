@@ -33,7 +33,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='DPIR',
+        name="DPIR",
         detection_keys=(
             "m_head.weight",
             "m_down1.0.res.0.weight",

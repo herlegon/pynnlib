@@ -65,7 +65,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='RCAN',
+        name="RCAN",
         detection_keys=(
             "tail.1.weight",
             "body.0.body.0.body.0.weight",

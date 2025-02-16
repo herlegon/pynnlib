@@ -61,7 +61,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='X-Restormer',
+        name="X-Restormer",
         detection_keys=(
             "patch_embed.proj.weight",
             "encoder_level1.0.spatial_attn.project_out.weight",

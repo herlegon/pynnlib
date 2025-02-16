@@ -170,7 +170,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='BSRGAN+_RealSR',
+        name="BSRGAN+_RealSR",
         detection_keys=(
             "conv_first.weight",
             "RRDB_trunk.0.RDB1.conv1.weight",
@@ -179,7 +179,7 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
         )
     ),
     NnPytorchArchitecture(
-        name='ESRGAN+',
+        name="ESRGAN+",
         detection_keys=(
             "model.0.weight",
             "model.1.sub.0.RDB1.conv1x1.weight",
@@ -189,7 +189,7 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
         # (legacy)
         # note: addedd a space at the end because
         # detection has not or
-        name='ESRGAN ',
+        name="ESRGAN ",
         detection_keys=(
             "conv_first.weight",
             "body.0.rdb1.conv1.weight",
@@ -198,7 +198,7 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
         )
     ),
     NnPytorchArchitecture(
-        name='ESRGAN',
+        name="ESRGAN",
         detection_keys=(
             "model.0.weight",
             "model.1.sub.0.RDB1.conv1.0.weight"

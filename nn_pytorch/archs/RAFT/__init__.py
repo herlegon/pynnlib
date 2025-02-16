@@ -57,7 +57,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='RAFT',
+        name="RAFT",
         detection_keys=(
             "fnet.conv1.weight",
             "update_block.flow_head.conv1.weight",

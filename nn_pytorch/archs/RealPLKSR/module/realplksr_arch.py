@@ -3,7 +3,7 @@ import torch
 from torch import nn
 from torch import Tensor
 from torch.nn.init import trunc_normal_
-from .dysample import DySample
+from ..._shared.dysample import DySample
 
 
 

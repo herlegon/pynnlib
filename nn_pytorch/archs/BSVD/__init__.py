@@ -164,7 +164,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='BSVD',
+        name="BSVD",
         # !!! currently no way to distingate BSVD and TSN except from shapes
         detection_keys=(
             "base_model.nets_list.1.outc.convblock.3.weight",

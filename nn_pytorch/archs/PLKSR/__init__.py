@@ -77,7 +77,7 @@ def parse(model: PytorchModel) -> None:
 
 MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
     NnPytorchArchitecture(
-        name='PLKSR',
+        name="PLKSR",
         detection_keys=(
             "feats.0.weight",
             "feats.1.channe_mixer.0.weight",
