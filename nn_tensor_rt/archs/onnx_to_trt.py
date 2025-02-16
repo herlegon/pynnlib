@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy as np
 from pynnlib.logger import nnlogger
+from pynnlib.nn_types import Idtype
 from pynnlib.session import set_cuda_device
 from pynnlib.utils.p_print import *
 import tensorrt as trt
@@ -12,11 +13,10 @@ from ..trt_types import ShapeStrategy, TrtEngine
 
 # https://github.com/NVIDIA/TensorRT/blob/main/demo/BERT/builder.py#L405
 
-def _onnx_to_trt_engine(
+def onnx_to_trt_engine(
     model: OnnxModel,
     device: str,
-    fp16: bool,
-    bf16: bool,
+    dtypes: set[Idtype],
     shape_strategy: ShapeStrategy,
 ) -> TrtEngine:
     """
@@ -27,6 +27,11 @@ def _onnx_to_trt_engine(
 
     """
     print("[V] Start converting to TRT")
+    if 'bf16' in dtypes:
+        raise NotImplementedError("not yet implemented")
+
+    fp16: bool = bool('fp16' in dtypes)
+
     network_flags = 1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
     set_cuda_device(device)
     with (
@@ -125,22 +130,4 @@ def _onnx_to_trt_engine(
         #     trt_engine_file.write(buffer)
 
     return trt_engine
-
-
-
-def onnx_to_trt_engine(
-    model: OnnxModel,
-    device: str,
-    fp16: bool,
-    bf16: bool,
-    shape_strategy: ShapeStrategy,
-):
-    engine = _onnx_to_trt_engine(
-        model,
-        device,
-        fp16,
-        bf16,
-        shape_strategy=shape_strategy
-    )
-    return engine
 

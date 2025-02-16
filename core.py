@@ -44,6 +44,7 @@ from .model import (
     TrtModel,
 )
 from .nn_types import (
+    Idtype,
     NnModelObject,
     NnFrameworkType
 )
@@ -221,8 +222,7 @@ class NnLib:
         self,
         model: NnModel,
         opset: int = 17,
-        fp16: bool = True,
-        bf16: bool = False,
+        dtype: Idtype = 'fp32',
         static: bool = False,
         device: str = 'cpu',
         out_dir: str | Path | None = None,
@@ -247,14 +247,14 @@ class NnLib:
             return model
 
         # TODO: put the following code in an Try-Except block
-        nnlogger.debug(yellow(f"[I] Convert to onnx model: device={device}, fp16={fp16}, opset={opset}"))
+        nnlogger.debug(yellow(f"[I] Convert to onnx model: device={device}, dtype={dtype}, opset={opset}"))
         if (
             model.arch is not None
             and (convert_fct := model.arch.to_onnx) is not None
         ):
             onnx_model_object: onnx.ModelProto = convert_fct(
                 model=model,
-                fp16=fp16,
+                dtype=dtype,
                 static=static,
                 opset=opset,
                 device=device,
@@ -273,9 +273,10 @@ class NnLib:
         )
         onnx_model.opset = opset
 
-        if fp16:
+        # TODO: clean this
+        if dtype == 'fp16' and dtype in model.arch.dtypes:
             onnx_model.dtypes = set(['fp16'])
-        elif bf16:
+        elif dtype == 'bf16' and dtype in model.arch.dtypes:
             onnx_model.dtypes = set(['bf16'])
         else:
             onnx_model.dtypes = set(['fp32'])
@@ -300,9 +301,7 @@ class NnLib:
     def convert_to_tensorrt(self,
         model: NnModel,
         shape_strategy: ShapeStrategy,
-        fp16: bool = True,
-        bf16: bool = False,
-        tf32: bool = False,
+        dtype: Idtype = '',
         optimization_level: int | None = None,
         opset: int = 17,
         device: str = "cuda:0",
@@ -317,8 +316,7 @@ class NnLib:
             model: input model
             shape_strategy: specify the min/opt/max shapes.
                 when static flag is set to True, the converter uses the opt shape
-            fp16: add pf16 support. An error if not supported by the GPU(no fallback)
-            bf16: add bf16 support. An error if not supported by the GPU(no fallback)
+            dtype: datatype of the tensorRT engine, the onnx model will always be in fp32
             optimization_level: (not supported) Set the builder optimization level to build the engine with.
             opset: onnx opset version if the input model is NOT an onnx model.
             device: GPU device used for this conversion: This model shall run on the same
@@ -331,10 +329,8 @@ class NnLib:
             raise ValueError(f"This model is already a TensorRT model")
 
         trt_dtypes = set(['fp32'])
-        if fp16 and 'fp16' in model.arch.dtypes:
-            trt_dtypes.add('fp16')
-        if bf16 and 'bf16' in model.arch.dtypes:
-            trt_dtypes.add('bf16')
+        if trt_dtypes:
+            trt_dtypes.add(dtype)
 
         # Remove suffixes from ONNX basename
         basename = os_path_basename(model.filepath)
@@ -367,13 +363,14 @@ class NnLib:
                 return self.open(filepath, device)
             else:
                 nnlogger.debug(f"[I] Engine {filepath} does not exist")
+            del _model
 
         # Convert to Onnx
-        nnlogger.debug(yellow(f"[I] Convert to onnx (fp16={fp16})"))
+        nnlogger.debug(yellow(f"[I] Convert to onnx (fp32, {dtype})"))
         onnx_model: OnnxModel = self.convert_to_onnx(
             model=model,
             opset=opset,
-            fp16=fp16,
+            dtype='fp32',
             static=shape_strategy.static,
             device=device,
             out_dir=out_dir,
@@ -384,11 +381,10 @@ class NnLib:
         trt_engine = None
         if convert_to_tensorrt_fct is not None:
             trt_engine = convert_to_tensorrt_fct(
-                onnx_model,
-                device,
-                fp16,
-                bf16,
-                shape_strategy
+                model=onnx_model,
+                device=device,
+                dtypes=trt_dtypes,
+                shape_strategy=shape_strategy
             )
         else:
             raise NotImplementedError("Cannot convert to TensorRT")

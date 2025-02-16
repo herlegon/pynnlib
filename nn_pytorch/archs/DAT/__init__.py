@@ -1,13 +1,33 @@
 import math
 from typing import Literal
+
+import onnx
 from pynnlib.architecture import NnPytorchArchitecture,SizeConstraint
 from pynnlib.model import PytorchModel
+from pynnlib.nn_types import Idtype
 from ...torch_types import StateDict
 from ..helpers import get_max_indice
 from ..torch_to_onnx import to_onnx
 from .module.dat_arch import DAT
 
 
+def _to_onnx(
+    model: PytorchModel,
+    dtype: Idtype,
+    opset: int,
+    static: bool = False,
+    device: str = 'cpu',
+    batch: int = 1,
+) -> onnx.ModelProto | None:
+    # Whatever the dtype, convert to fp32 because others are not supported
+    return to_onnx(
+        model=model,
+        dtype=dtype,
+        opset=opset,
+        static=static,
+        device=device,
+        batch=batch,
+    )
 
 
 def parse(model: PytorchModel) -> None:
@@ -130,7 +150,7 @@ MODEL_ARCHITECTURES: tuple[NnPytorchArchitecture] = (
             "layers.0.blocks.0.ffn.fc1.weight"
         ),
         parse=parse,
-        to_onnx=to_onnx,
+        to_onnx=_to_onnx,
         dtypes=['fp32', 'bf16'],
         size_constraint=SizeConstraint(
             min=(16, 16)

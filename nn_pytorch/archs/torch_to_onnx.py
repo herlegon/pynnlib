@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 
 from pynnlib.architecture import SizeConstraint
 from pynnlib.import_libs import is_cuda_available
+from pynnlib.nn_types import Idtype
 from ..inference.session import PyTorchSession
 if TYPE_CHECKING:
     from pynnlib.model import PytorchModel
@@ -15,7 +16,7 @@ from pynnlib.utils.p_print import *
 
 def to_onnx(
     model: PytorchModel,
-    fp16: bool,
+    dtype: Idtype,
     opset: int,
     static: bool = False,
     device: str = 'cpu',
@@ -32,14 +33,18 @@ def to_onnx(
         raise NotImplementedError(red(f"{model.arch.name} is not supported"))
         return None
 
+    fp16: bool = bool(dtype == 'fp16')
     if not is_cuda_available():
         print("[W] cuda not available, fallback to cpu")
         device = 'cpu'
         fp16 = False
 
+    if dtype == 'bf16':
+        raise NotImplementedError("Conversion to bf16 is not supported yet.")
+
     # https://learn.microsoft.com/en-us/windows/ai/windows-ml/tutorials/pytorch-analysis-convert-model
     print(f"[V] PyTorch to ONNX: initialize a session, device={device}, fp16={fp16}, opset={opset}")
-    session.initialize(device=device, fp16=fp16)
+    session.initialize(device=device, dtype=dtype)
 
     # https://github.com/onnx/onnx/issues/654
     if batch == 1:

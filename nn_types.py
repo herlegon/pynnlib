@@ -31,3 +31,7 @@ NnModelObject = onnx.ModelProto | StateDict | TrtEngine
 
 # Supported datatypes for model
 NnModelDtype = Literal['fp32', 'fp16', 'bf16']
+
+# Datatype for inference
+Idtype = Literal['fp32', 'fp16', 'bf16']
+

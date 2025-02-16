@@ -37,6 +37,7 @@ from .nn_tensor_rt.trt_types import ShapeStrategy
 from .nn_types import (
     NnFrameworkType,
     NnModelObject,
+    Idtype,
 )
 
 from .framework import (
@@ -63,6 +64,7 @@ __all__ = [
     "TrtModel",
 
     "NnModelObject",
+    "Idtype",
 
     "NnModelSession",
     "OnnxSession",

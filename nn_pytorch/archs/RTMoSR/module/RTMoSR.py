@@ -38,7 +38,9 @@ class RMSNorm(nn.Module):
 
 
 class Conv3XC(nn.Module):
-    def __init__(self, c_in: int, c_out: int, gain: int = 2, s: int = 1, bias: bool = True) -> None:
+    def __init__(
+        self, c_in: int, c_out: int, gain: int = 2, s: int = 1, bias: bool = True
+    ) -> None:
         super().__init__()
         self.weight_concat = None
         self.bias_concat = None
@@ -94,10 +96,18 @@ class Conv3XC(nn.Module):
         w3 = self.conv[2].weight.data.clone().detach()
         b3 = self.conv[2].bias.data.clone().detach()
 
-        w = F.conv2d(w1.flip(2, 3).permute(1, 0, 2, 3), w2, padding=2, stride=1).flip(2, 3).permute(1, 0, 2, 3)
+        w = (
+            F.conv2d(w1.flip(2, 3).permute(1, 0, 2, 3), w2, padding=2, stride=1)
+            .flip(2, 3)
+            .permute(1, 0, 2, 3)
+        )
         b = (w2 * b1.reshape(1, -1, 1, 1)).sum((1, 2, 3)) + b2
 
-        self.weight_concat = F.conv2d(w.flip(2, 3).permute(1, 0, 2, 3), w3, padding=0, stride=1).flip(2, 3).permute(1, 0, 2, 3)
+        self.weight_concat = (
+            F.conv2d(w.flip(2, 3).permute(1, 0, 2, 3), w3, padding=0, stride=1)
+            .flip(2, 3)
+            .permute(1, 0, 2, 3)
+        )
         self.bias_concat = (w3 * b.reshape(1, -1, 1, 1)).sum((1, 2, 3)) + b3
 
         sk_w = self.sk.weight.data.clone().detach()
@@ -106,7 +116,9 @@ class Conv3XC(nn.Module):
 
         H_pixels_to_pad = (target_kernel_size - 1) // 2  # noqa: N806
         W_pixels_to_pad = (target_kernel_size - 1) // 2  # noqa: N806
-        sk_w = F.pad(sk_w, [H_pixels_to_pad, H_pixels_to_pad, W_pixels_to_pad, W_pixels_to_pad])
+        sk_w = F.pad(
+            sk_w, [H_pixels_to_pad, H_pixels_to_pad, W_pixels_to_pad, W_pixels_to_pad]
+        )
 
         self.weight_concat = self.weight_concat + sk_w
         self.bias_concat = self.bias_concat + sk_b
@@ -115,7 +127,7 @@ class Conv3XC(nn.Module):
         self.eval_conv.bias.data = self.bias_concat  # type: ignore
 
     def forward(self, x):  # noqa: ANN201, ANN001
-        x_pad = F.pad(x, (1, 1, 1, 1), 'constant', 0)
+        x_pad = F.pad(x, (1, 1, 1, 1), "constant", 0)
         out = self.conv(x_pad) + self.sk(x)
         return out
 
@@ -126,7 +138,9 @@ class SeqConv3x3(nn.Module):
         self.inp_planes = inp_planes
         self.out_planes = out_planes
         self.mid_planes = int(out_planes * depth_multiplier)
-        conv0 = torch.nn.Conv2d(self.inp_planes, self.mid_planes, kernel_size=1, padding=0)
+        conv0 = torch.nn.Conv2d(
+            self.inp_planes, self.mid_planes, kernel_size=1, padding=0
+        )
         self.k0 = conv0.weight
         self.b0 = conv0.bias
 
@@ -138,7 +152,7 @@ class SeqConv3x3(nn.Module):
         # conv-1x1
         y0 = F.conv2d(input=x, weight=self.k0, bias=self.b0, stride=1)
         # explicitly padding with bias
-        y0 = F.pad(y0, (1, 1, 1, 1), 'constant', 0)
+        y0 = F.pad(y0, (1, 1, 1, 1), "constant", 0)
         b0_pad = self.b0.view(1, -1, 1, 1)
         y0[:, :, 0:1, :] = b0_pad
         y0[:, :, -1:, :] = b0_pad
@@ -154,7 +168,9 @@ class SeqConv3x3(nn.Module):
         # re-param conv kernel
         RK = F.conv2d(input=self.k1, weight=self.k0.permute(1, 0, 2, 3))
         # re-param conv bias
-        RB = torch.ones(1, self.mid_planes, 3, 3, device=device) * self.b0.view(1, -1, 1, 1)
+        RB = torch.ones(1, self.mid_planes, 3, 3, device=device) * self.b0.view(
+            1, -1, 1, 1
+        )
         RB = (
             F.conv2d(input=RB, weight=self.k1).view(
                 -1,
@@ -182,8 +198,12 @@ class RepConv(nn.Module):
         self.conv3.update_params()
         conv3_w, conv3_b = self.conv3.eval_conv.weight, self.conv3.eval_conv.bias
         device = self.conv_3x3_rep.weight.device
-        sum_weight = (self.alpha[0] * conv1_w + self.alpha[1] * conv2_w + self.alpha[2] * conv3_w).to(device)
-        sum_bias = (self.alpha[0] * conv1_b + self.alpha[1] * conv2_b + self.alpha[2] * conv3_b).to(device)
+        sum_weight = (
+            self.alpha[0] * conv1_w + self.alpha[1] * conv2_w + self.alpha[2] * conv3_w
+        ).to(device)
+        sum_bias = (
+            self.alpha[0] * conv1_b + self.alpha[1] * conv2_b + self.alpha[2] * conv3_b
+        ).to(device)
         self.conv_3x3_rep.weight = nn.Parameter(sum_weight)
         self.conv_3x3_rep.bias = nn.Parameter(sum_bias)
 
@@ -210,7 +230,9 @@ class OmniShift(nn.Module):
     def __init__(self, dim: int = 48) -> None:
         super().__init__()
         # Define the layers for training
-        self.conv1x1 = nn.Conv2d(in_channels=dim, out_channels=dim, kernel_size=1, groups=dim, bias=True)
+        self.conv1x1 = nn.Conv2d(
+            in_channels=dim, out_channels=dim, kernel_size=1, groups=dim, bias=True
+        )
         self.conv3x3 = nn.Conv2d(
             in_channels=dim,
             out_channels=dim,
@@ -247,7 +269,12 @@ class OmniShift(nn.Module):
         out3x3 = self.conv3x3(x)
         out5x5 = self.conv5x5(x)
 
-        out = self.alpha1 * x + self.alpha2 * out1x1 + self.alpha3 * out3x3 + self.alpha4 * out5x5
+        out = (
+            self.alpha1 * x
+            + self.alpha2 * out1x1
+            + self.alpha3 * out3x3
+            + self.alpha4 * out5x5
+        )
         return out
 
     def reparam_5x5(self) -> None:
@@ -265,7 +292,9 @@ class OmniShift(nn.Module):
         )
 
         combined_bias = (
-            self.alpha2.squeeze() * self.conv1x1.bias + self.alpha3.squeeze() * self.conv3x3.bias + self.alpha4.squeeze() * self.conv5x5.bias
+            self.alpha2.squeeze() * self.conv1x1.bias
+            + self.alpha3.squeeze() * self.conv3x3.bias
+            + self.alpha4.squeeze() * self.conv5x5.bias
         )
 
         device = self.conv5x5_reparam.weight.device
@@ -293,7 +322,9 @@ class ParPixelUnshuffle(nn.Module):
     def __init__(self, in_dim, out_dim, down):
         super().__init__()
         self.pu = nn.PixelUnshuffle(down)
-        self.poll = nn.Sequential(nn.MaxPool2d(kernel_size=down, stride=down), RepConv(in_dim, out_dim))
+        self.poll = nn.Sequential(
+            nn.MaxPool2d(kernel_size=down, stride=down), RepConv(in_dim, out_dim)
+        )
 
     def forward(self, x):
         return self.pu(x) + self.poll(x)
@@ -353,13 +384,24 @@ class RTMoSR(nn.Module):
         unshuffle = 0
         if scale < 4 and unshuffle_mod:
             if scale == 3:
-                raise ValueError('Unshuffle_mod does not support 3x')
+                raise ValueError("Unshuffle_mod does not support 3x")
             unshuffle = 4 // scale
             scale = 4
         self.pad = unshuffle if unshuffle > 0 else 1
         self.pad *= 2
-        self.to_feat = RepConv(3, dim) if not unshuffle else nn.Sequential(nn.PixelUnshuffle(unshuffle), RepConv(3 * unshuffle * unshuffle, dim))
-        self.body = nn.Sequential(*[GatedCNNBlock(dim, ffn_expansion, dccm=dccm, se=se) for _ in range(n_blocks)])
+        self.to_feat = (
+            RepConv(3, dim)
+            if not unshuffle
+            else nn.Sequential(
+                nn.PixelUnshuffle(unshuffle), RepConv(3 * unshuffle * unshuffle, dim)
+            )
+        )
+        self.body = nn.Sequential(
+            *[
+                GatedCNNBlock(dim, ffn_expansion, dccm=dccm, se=se)
+                for _ in range(n_blocks)
+            ]
+        )
         self.to_img = nn.Sequential(
             RepConv(dim, 3 * scale**2),
             nn.PixelShuffle(scale),
@@ -377,11 +419,21 @@ class RTMoSR(nn.Module):
         scaled_size = self.pad
         mod_pad_h = (scaled_size - resolution[0] % scaled_size) % scaled_size
         mod_pad_w = (scaled_size - resolution[1] % scaled_size) % scaled_size
-        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), 'reflect')
+        return F.pad(x, (0, mod_pad_w, 0, mod_pad_h), "reflect")
 
     def forward(self, x):
         b, c, h, w = x.shape
         out = self.check_img_size(x, (h, w))
         out = self.to_feat(out)
         out = self.body(out)
-        return self.to_img(out)[:, :, : h * self.scale, : w * self.scale] + F.interpolate(x, scale_factor=self.scale)
+        return self.to_img(out)[
+            :, :, : h * self.scale, : w * self.scale
+        ] + F.interpolate(x, scale_factor=self.scale)
+
+
+def RTMoSR_L(**kwargs):
+    return RTMoSR(unshuffle_mod=True, **kwargs)
+
+
+def RTMoSR_UL(**kwargs):
+    return RTMoSR(ffn_expansion=1.5, dccm=False, unshuffle_mod=True, **kwargs)

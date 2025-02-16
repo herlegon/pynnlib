@@ -10,7 +10,7 @@ from .module.RTMoSR import RTMoSR
 
 def parse(model: PytorchModel) -> None:
     state_dict: StateDict = model.state_dict
-    scale: int = 0
+    scale: int = 2
     in_nc: int = 3
     out_nc: int = 3
 
@@ -27,6 +27,10 @@ def parse(model: PytorchModel) -> None:
     se = "body.0.conv.2.squeezing.0.weight" in state_dict
     ffn = state_dict["body.0.fc1.conv_3x3_rep.weight"].shape[0] / dim / 2
     n_blocks = get_nsequences(state_dict, "body")
+
+    # bug in detection for s
+    scale: int = 2
+
 
     # Update model parameters
     model.update(

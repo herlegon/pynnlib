@@ -4,6 +4,8 @@ import numpy as np
 import torch
 from torch import Tensor
 
+from ..nn_types import Idtype
+
 
 # https://github.com/pytorch/pytorch/blob/main/torch/testing/_internal/common_utils.py
 # Dict of NumPy dtype -> torch dtype (when the correspondence exists)
@@ -53,6 +55,12 @@ torch_to_cp_dtype: dict[torch.dtype, cp.dtype] = {
     torch.complex128: cp.complex128,
 }
 
+
+IdtypeToTorch: dict[Idtype, torch.dtype] = {
+    'fp32': torch.float,
+    'fp16': torch.float16,
+    'bf16': torch.bfloat16,
+}
 
 
 def to_nchw_torch(t: Tensor) -> Tensor:

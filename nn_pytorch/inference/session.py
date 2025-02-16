@@ -12,8 +12,10 @@ from pynnlib import is_cuda_available
 from pynnlib.logger import nnlogger
 from pynnlib.model import PytorchModel
 from pynnlib.architecture import SizeConstraint
+from pynnlib.nn_types import Idtype
 from pynnlib.session import GenericSession
 from pynnlib.utils.torch_tensor import (
+    IdtypeToTorch,
     to_nchw_torch,
     flip_r_b_channels_torch,
     to_hwc_torch
@@ -68,17 +70,28 @@ class PyTorchSession(GenericSession):
         self,
         device: str,
         fp16: bool = False,
+        dtype: Idtype = "",
         warmup: bool = True,
     ) -> None:
         module: nn.Module = self.module
-        self.fp16 = fp16
-        self.device = device
-        if not is_cuda_available():
-            self.fp16 = False
-            self.device: str = 'cpu'
-        self.fp16 = self.fp16 and 'fp16' in self.model.arch.dtypes
 
-        nnlogger.debug(f"[V] Initialize a PyTorch inference session fp16={self.fp16}")
+        self.device = device
+        self.i_dtype = dtype
+        if dtype:
+            if not is_cuda_available() or dtype not in self.model.arch.dtypes:
+                self.i_dtype = "fp32"
+                self.device: str = 'cpu'
+        else:
+            self.fp16 = fp16
+            if not is_cuda_available():
+                self.fp16 = False
+                self.device: str = 'cpu'
+            self.fp16 = self.fp16 and 'fp16' in self.model.arch.dtypes
+
+        if not self.i_dtype:
+            self.i_dtype = 'fp16' if self.fp16 else 'fp32'
+
+        nnlogger.debug(f"[V] Initialize a PyTorch inference session fp16={self.i_dtype}")
         torch.backends.cudnn.enabled = True
 
         module.eval()
@@ -86,8 +99,9 @@ class PyTorchSession(GenericSession):
             param.requires_grad = False
 
         nnlogger.debug(f"[V] load model to {self.device}, fp16={self.fp16}")
+        self.torch_dtype: torch.dtype = IdtypeToTorch[self.i_dtype]
         module.to(self.device)
-        module = module.half() if self.fp16 else module.float()
+        module = module.to(dtype=self.torch_dtype)
         if warmup and 'cuda' in device:
             self.warmup(3)
 
@@ -149,13 +163,11 @@ class PyTorchSession(GenericSession):
             if torch_transfer:
                 h_tensor.copy_(in_tensor).detach()
                 d_tensor: Tensor = h_tensor.to(
-                    self.device, dtype=torch.float32, non_blocking=True
+                    self.device, dtype=self.torch_dtype, non_blocking=True
                 )
                 torch.cuda.synchronize()
 
-
-            # in_tensor = in_tensor.to(self.device, dtype=torch.float32)
-            in_tensor: Tensor = d_tensor.half() if self.fp16 else d_tensor.float()
+            in_tensor: Tensor = d_tensor.to(self.torch_dtype)
             in_tensor = flip_r_b_channels_torch(in_tensor)
             in_tensor = to_nchw_torch(in_tensor).contiguous()
 

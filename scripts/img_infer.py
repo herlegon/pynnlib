@@ -151,6 +151,17 @@ Fallback to float if the execution provider does not support it
     )
 
     parser.add_argument(
+        "--bf16",
+        "-bf16",
+        action="store_true",
+        required=False,
+        default=False,
+        help="""Mixed precision (bf16).
+Fallback to float if the execution provider does not support it
+\n"""
+    )
+
+    parser.add_argument(
         "-n",
         "--n",
         type=int,
@@ -223,7 +234,7 @@ Fallback to float if the execution provider does not support it
     print(
         lightcyan(f"\tarch:"), model.arch_name,
         lightcyan(f"scale:"), model.scale,
-        lightcyan(f"datatypes:"), ', '.join(model.dtypes),
+        lightcyan(f"datatypes:"), ', '.join(model.arch.dtypes),
         f"\t\t(parsed in {1000 * elapsed:.1f}ms)"
     )
     if arguments.verbose:
@@ -254,14 +265,31 @@ Fallback to float if the execution provider does not support it
     if fp16 and 'fp16' not in model.arch.dtypes:
         sys.exit(red("This model does not support Half datatype (fp16)."))
 
+    # Check datatype supported by the execution provider and by the model
+    bf16: bool = arguments.bf16
+    if device == 'cpu' and bf16:
+        sys.exit(red("The execution provider does not support bfloat16 datatype (bf16)."))
+    if bf16 and 'bf16' not in model.arch.dtypes:
+        sys.exit(red("This model does not support bfloat16 datatype (bf16)."))
+
     # Create a session
     if arguments.verbose:
         print("Create a session")
     session: NnModelSession = nnlib.session(model)
     if arguments.verbose:
         print("Initialize the session")
+
+    dtype_str: str = "fp32"
+    if fp16:
+        dtype_str = "fp16"
+    if bf16:
+        dtype_str = "bf16"
     try:
-        session.initialize(device=device, fp16=fp16, warmup=True)
+        session.initialize(
+            device=device,
+            i_dtype=dtype_str,
+            warmup=bool(arguments.profiling)
+        )
     except Exception as e:
         session.initialize(device=device, fp16=fp16, warmup=False)
         sys.exit(red(f"Error: {e}"))
@@ -270,7 +298,7 @@ Fallback to float if the execution provider does not support it
     print(lightcyan(f"\tScale:"), f"{model.scale}")
     print(lightcyan(f"\tFramework:"), f"{model.fwk_type.value}")
     print(lightcyan(f"\tDevice:"), f"{device}")
-    print(lightcyan(f"\tDatatype:"), f"{'fp16' if fp16 else 'fp32'}")
+    print(lightcyan(f"\tDatatype:"), f"{dtype_str}")
 
     # Inference
     inferences: int = arguments.n if arguments.profiling else 1

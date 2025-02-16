@@ -1,3 +1,4 @@
+from typing import Literal
 from pynnlib.utils.p_print import *
 from pynnlib.architecture import NnPytorchArchitecture
 from pynnlib.model import PytorchModel
@@ -13,7 +14,13 @@ def parse(model: PytorchModel) -> None:
     in_nc: int = 3
     out_nc: int = 3
 
-    upsample = ['conv', 'pixelshuffledirect', 'pixelshuffle', 'nearest+conv', 'dysample']
+    upsample = Literal[
+        'conv',
+        'pixelshuffledirect',
+        'pixelshuffle',
+        'nearest+conv',
+        'dysample'
+    ]
     dim, in_nc = state_dict['in_to_dim.weight'].shape[:2]
     n_blocks = get_nsequences(state_dict, 'blocks')
     n_block = get_nsequences(state_dict, 'blocks.0.blocks')
