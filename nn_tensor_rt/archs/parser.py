@@ -2,12 +2,12 @@ import os
 from pathlib import Path
 from typing import Any, Type
 
-from pynnlib.session import set_cuda_device
+from pynnlib.session import set_cupy_cuda_device
 import tensorrt as trt
 from tensorrt import DataType as TrtDType
 
 from pynnlib.architecture import detect_model_arch
-from pynnlib.nn_types import NnModelDtype
+from pynnlib.nn_types import Idtype
 from pynnlib.utils.p_print import *
 from pynnlib.model import ShapeStrategy, TrtModel
 from pynnlib.logger import nnlogger
@@ -76,7 +76,7 @@ def get_shape_strategy(engine, tensor_name: str) -> ShapeStrategy:
 
 
 def parse_engine(model: TrtModel) -> None:
-    set_cuda_device(model.device)
+    set_cupy_cuda_device(model.device)
     engine = None
     if os.path.exists(model.filepath):
         trt_runtime = trt.Runtime(TRT_LOGGER)
@@ -105,7 +105,7 @@ def parse_engine(model: TrtModel) -> None:
     if in_dtype != out_dtype:
         raise NotImplementedError("TensorRT: IO, dtypes are not the same")
 
-    dtypes: set[NnModelDtype] = set()
+    dtypes: set[Idtype] = set()
     if in_dtype == TrtDType.FLOAT :
         dtypes.add('fp32')
     elif in_dtype == TrtDType.HALF:

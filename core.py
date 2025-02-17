@@ -233,8 +233,7 @@ class NnLib:
         Args:
             model: input model
             opset: onnx opset version
-            fp16: uses fp16 if the input model supports fp16
-                    and if the device supports it (GPU).
+            dtype: Idtype
             device: device used for this conversion. the converted model will not use fp16
                     if this device does not support it.
             outdir: directory to save the onnx model. If set to None,

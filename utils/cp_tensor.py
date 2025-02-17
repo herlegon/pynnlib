@@ -17,7 +17,7 @@ class MemcpyKind:
 
 
 
-def to_nchw(tensor: cp.ndarray) -> cp.ndarray:
+def to_nchw_cp(tensor: cp.ndarray) -> cp.ndarray:
     shape_size = len(tensor.shape)
     if shape_size == 3:
         # (H, W, C) -> (1, C, H, W)
@@ -31,7 +31,7 @@ def to_nchw(tensor: cp.ndarray) -> cp.ndarray:
         raise ValueError("Unsupported input tensor shape")
 
 
-def to_hwc(tensor: cp.ndarray) -> cp.ndarray:
+def to_hwc_cp(tensor: cp.ndarray) -> cp.ndarray:
     if len(tensor.shape) == 4:
         # (1, C, H, W) -> (H, W, C)
         return cp.transpose(cp.squeeze(tensor, 0), (1, 2, 0))
@@ -40,7 +40,7 @@ def to_hwc(tensor: cp.ndarray) -> cp.ndarray:
         raise ValueError("Unsupported output tensor shape")
 
 
-def flip_r_b_channels(tensor: cp.ndarray) -> cp.ndarray:
+def flip_r_b_channels_cp(tensor: cp.ndarray) -> cp.ndarray:
     # flip returns a copy
     # what about stack?
     # inplace

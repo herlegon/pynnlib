@@ -18,6 +18,6 @@ MODEL_ARCHITECTURES: tuple[NnTensorrtArchitecture] = (
         detect=is_model_generic,
         parse=parse_engine,
         create_session=create_session,
-        dtypes=('fp32', 'fp16'),
+        dtypes=('fp32', 'fp16', 'bf16'),
     ),
 )

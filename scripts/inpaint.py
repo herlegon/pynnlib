@@ -11,6 +11,8 @@ from typing import Any
 import cv2
 import numpy as np
 
+from pynnlib.nn_types import Idtype
+
 # logging.config.fileConfig('config.ini')
 # logger = logging.getLogger("pynnlib")
 # logging.basicConfig(filename="logs.log", filemode="w", format="%(name)s → %(levelname)s: %(message)s")
@@ -40,8 +42,7 @@ def convert_to_tensorrt(
     arguments: Any,
     model: NnModel,
     device: str,
-    fp16: bool,
-    bf16: bool=False,
+    dtype: Idtype = 'fp32',
 ) -> TrtModel | None:
     trt_model: TrtModel | None = None
 
@@ -82,8 +83,7 @@ def convert_to_tensorrt(
     trt_model: TrtModel = nnlib.convert_to_tensorrt(
         model=model,
         shape_strategy=shape_strategy,
-        fp16=fp16,
-        bf16=bf16,
+        dtype=dtype,
         tf32=False,
         optimization_level=opt_level,
         opset=arguments.opset,
@@ -212,6 +212,7 @@ Ignored if the model is not an onnx model."
     )
 
     parser.add_argument(
+        "-fp32",
         "--fp32",
         action="store_true",
         required=False,
@@ -221,6 +222,7 @@ Ignored if the model is not an onnx model."
     )
 
     parser.add_argument(
+        "-fp16",
         "--fp16",
         action="store_true",
         required=False,
@@ -325,31 +327,6 @@ Fallback to float if the execution provider does not support it
         print(model)
 
 
-    # Convert to tensorRT
-    if False:
-        fp16 = False
-        print(f"[V] Convert {model.filepath} to ONNX (fp16={fp16}): ")
-        start_time = time.time()
-        onnx_model = nnlib.convert_to_onnx(
-            model=model,
-            opset=20,
-            fp16=fp16,
-            static=False,
-            device=device_for_parse,
-            out_dir=path_split(model.filepath)[0],
-        )
-        elapsed_time = time.time() - start_time
-        print(lightgreen(f"[I] Onnx model saved as {onnx_model.filepath}"))
-        print(f"[V] Converted in {elapsed_time:.2f}s")
-        print(onnx_model)
-
-        print(f"[V] Convert {model.filepath} to TensorRT (fp16={fp16}): ")
-        start_time = time.time()
-        trt_model = convert_to_tensorrt(
-            arguments, model=model, device=device, fp16=fp16,
-        )
-
-
     # Verify that the image is valid:
     if not model.is_size_valid(in_img.shape):
         h, w = in_img.shape[:2]
@@ -375,6 +352,10 @@ Fallback to float if the execution provider does not support it
     if fp16 and 'fp16' not in model.arch.dtypes:
         sys.exit(red("This model does not support Half datatype (fp16)."))
 
+    dtype: Idtype = 'fp32'
+    if fp16:
+        dtype = 'fp16'
+
     # Create a session
     if arguments.verbose:
         print("Create a session")
@@ -382,16 +363,16 @@ Fallback to float if the execution provider does not support it
     if arguments.verbose:
         print("Initialize the session")
     try:
-        session.initialize(device=device, fp16=fp16)
+        session.initialize(device=device, dtype=dtype)
     except Exception as e:
-        session.initialize(device=device, fp16=fp16)
+        session.initialize(device=device, dtype=dtype)
         sys.exit(red(f"Error: {e}"))
 
     print(lightcyan(f"Inference with"), f"{model.filepath}")
     print(lightcyan(f"\tScale:"), f"{model.scale}")
     print(lightcyan(f"\tFramework:"), f"{model.fwk_type.value}")
     print(lightcyan(f"\tDevice:"), f"{device}")
-    print(lightcyan(f"\tDatatype:"), f"{'fp16' if fp16 else 'fp32'}")
+    print(lightcyan(f"\tDatatype:"), f"{dtype}")
 
     # Inference
     inferences: int = arguments.n

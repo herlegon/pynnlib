@@ -12,6 +12,7 @@ if not os.path.exists("pynnlib"):
         sys.path.append(root_path)
 
 from pynnlib import (
+    Idtype,
     nnlib,
     NnModel,
     TrtModel,
@@ -28,8 +29,7 @@ def convert_to_tensorrt(
     arguments: Any,
     model: NnModel,
     device: str,
-    fp16: bool,
-    bf16: bool=False,
+    dtype: Idtype,
 ) -> TrtModel | None:
     trt_model: TrtModel | None = None
 
@@ -70,9 +70,7 @@ def convert_to_tensorrt(
     trt_model: TrtModel = nnlib.convert_to_tensorrt(
         model=model,
         shape_strategy=shape_strategy,
-        fp16=fp16,
-        bf16=bf16,
-        tf32=False,
+        dtype=dtype,
         optimization_level=opt_level,
         opset=arguments.opset,
         device=device,
@@ -99,6 +97,7 @@ def main():
     )
 
     parser.add_argument(
+        "-onnx",
         "--onnx",
         action="store_true",
         required=False,
@@ -108,6 +107,7 @@ def main():
     )
 
     parser.add_argument(
+        "-trt",
         "--trt",
         action="store_true",
         required=False,
@@ -117,6 +117,7 @@ def main():
     )
 
     parser.add_argument(
+        "-fp32",
         "--fp32",
         action="store_true",
         required=False,
@@ -126,6 +127,7 @@ def main():
     )
 
     parser.add_argument(
+        "-fp16",
         "--fp16",
         action="store_true",
         required=False,
@@ -135,6 +137,17 @@ def main():
     )
 
     parser.add_argument(
+        "-bf16",
+        "--bf16",
+        action="store_true",
+        required=False,
+        default=False,
+        help="""Support mixed precision (bf16).
+\n"""
+    )
+
+    parser.add_argument(
+        "-opset",
         "--opset",
         type=int,
         required=False,
@@ -144,6 +157,7 @@ def main():
     )
     parser.add_argument(
         "--static",
+        "-static",
         action="store_true",
         required=False,
         default=False,
@@ -151,25 +165,38 @@ def main():
 \n"""
     )
     parser.add_argument(
-        "--min_size", type=str, default='64x64', required=False,
+        "-min",
+        "--min_size",
+        type=str,
+        default='64x64',
+        required=False,
         help="""(TensorRT) min. size used to generate a tensorRT engine.
 format: WxH
 \n"""
     )
     parser.add_argument(
-        "--opt_size", type=str, default='768x576', required=False,
+        "-opt",
+        "--opt_size",
+        type=str,
+        default='768x576',
+        required=False,
         help="""(TensorRT) opt. size used to generate a tensorRT engine.
 format: WxH.
 use the input video dimension if set to \'input\'.
 \n"""
     )
     parser.add_argument(
-        "--max_size", type=str, default='1920x1080', required=False,
+        "-max",
+        "--max_size",
+        type=str,
+        default='1920x1080',
+        required=False,
         help="""(TensorRT) max. size used to generate a tensorRT engine.
 format: WxH.
 \n"""
     )
     parser.add_argument(
+        "-fixed",
         "--fixed_size",
         action="store_true",
         required=False,
@@ -178,7 +205,10 @@ format: WxH.
 \n"""
     )
     parser.add_argument(
-        "--opt_level", type=int, default=-1, required=False,
+        "--opt_level",
+        type=int,
+        default=3,
+        required=False,
         help="""(TensorRT) (not yet supported) Optimization level. [1..5].
 \n"""
     )
@@ -190,6 +220,9 @@ format: WxH.
 
     if arguments.fp16 and not is_cuda_available():
         sys.exit(red(f"[E] No CUDA device found, cannot convert with fp16 support"))
+
+    if arguments.bf16 and not is_cuda_available():
+        sys.exit(red(f"[E] No CUDA device found, cannot convert with bf16 support"))
 
     # device and datatype
     device = "cuda" if is_cuda_available() else 'cpu'
@@ -206,15 +239,26 @@ format: WxH.
         sys.exit(red(f"[W] This arch does not support conversion with fp16 support"))
     fp16: bool = arguments.fp16 and 'fp16' in model.arch.dtypes
 
+    if arguments.bf16 and not 'bf16' in model.arch.dtypes:
+        sys.exit(red(f"[W] This arch does not support conversion with bf16 support"))
+    bf16: bool = arguments.bf16 and 'bf16' in model.arch.dtypes
+
+    # bf16 has the priority if multiple types are provided
+    c_dtype: Idtype = 'fp32'
+    if fp16:
+        c_dtype = 'fp16'
+    if bf16:
+        c_dtype = 'bf16'
+
     # Model conversion
     model = model
     if arguments.onnx:
-        print(f"[V] Convert {model.filepath} to ONNX (fp16={fp16}): ")
+        print(f"[V] Convert {model.filepath} to ONNX (dtype={c_dtype}): ")
         start_time = time.time()
         onnx_model = nnlib.convert_to_onnx(
             model=model,
             opset=arguments.opset,
-            fp16=fp16,
+            dtype=c_dtype,
             static=arguments.static,
             device=device,
             out_dir=path_split(model.filepath)[0],
@@ -226,10 +270,10 @@ format: WxH.
 
     if arguments.trt:
         if is_tensorrt_available():
-            print(f"[V] Convert {model.filepath} to TensorRT (fp16={fp16}): ")
+            print(f"[V] Convert {model.filepath} to TensorRT (c_dtype={c_dtype}): ")
             start_time = time.time()
             trt_model = convert_to_tensorrt(
-                arguments, model=model, device=device, fp16=fp16,
+                arguments, model=model, device=device, dtype=c_dtype,
             )
             if trt_model is None:
                 print(red("[E] Failed to convert to a TensorRT engine"))

@@ -74,7 +74,7 @@ model: NnModel = nnlib.open(model_filepath)
 trt_model: TrtModel = nnlib.convert_to_tensorrt(
     model=model,
     shape_strategy=shape_strategy,
-    fp16=fp16,
+    dtype='fp16',
     # optimization_level=opt_level, # Not yet supported
     opset=opset,
     device=device,
@@ -105,7 +105,7 @@ model: NnModel = nnlib.open(model_filepath)
 session: NnModelSession = nnlib.session(model)
 session.initialize(
     device=device,
-    fp16=fp16,
+    dtype='fp16',
 )
 
 # Perform inference

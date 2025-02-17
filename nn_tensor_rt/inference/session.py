@@ -1,6 +1,7 @@
 import numpy as np
 from pprint import pprint
 from pynnlib import is_tensorrt_available
+from pynnlib.nn_types import Idtype
 from utils.p_print import yellow
 if is_tensorrt_available():
     import tensorrt as trt
@@ -8,11 +9,12 @@ if is_tensorrt_available():
 import torch
 from pynnlib.logger import nnlogger
 from pynnlib.model import TrtModel
-from pynnlib.session import GenericSession, set_cuda_device
+from pynnlib.session import GenericSession, set_cupy_cuda_device
 from pynnlib.utils.torch_tensor import (
-    flip_r_b_channels_torch,
-    to_nchw_torch,
-    to_hwc_torch,
+    IdtypeToTorch,
+    flip_r_b_channels,
+    to_nchw,
+    to_hwc,
 )
 
 
@@ -61,6 +63,8 @@ class TensorRtSession(GenericSession):
         self.model: TrtModel = model
         self._infer_stream = None
 
+        raise ValueError("Refactor for bf16")
+
         # Use the best datatype
         self.fp16 = bool('fp16' in self.model.dtypes)
         self.in_tensor_dtype: torch.dtype = (
@@ -79,17 +83,17 @@ class TensorRtSession(GenericSession):
 
     def initialize(self,
         device: str = 'cuda:0',
-        fp16: bool = True,
+        dtype: Idtype = 'fp32',
         **kwargs,
     ):
         # Device and dtype
         self.device = device
-        self.fp16 = fp16 and ('fp16' in self.model.dtypes)
-        self.in_tensor_dtype = torch.float16 if self.fp16 else torch.float32
-        self.out_tensor_dtype = self.in_tensor_dtype
+        self.dtype = IdtypeToTorch[dtype]
+        self.in_tensor_dtype = self.dtype
+        self.out_tensor_dtype = self.dtype
 
         nnlogger.debug(f"[I] Use {device} to load the tensorRT Engine")
-        set_cuda_device(device)
+        set_cupy_cuda_device(device)
 
         # Deserialize and create the context
         model_path = self.model.filepath
@@ -146,20 +150,19 @@ class TensorRtSession(GenericSession):
         )
         in_tensor_shape = (1, c, *in_img.shape[:2])
         out_tensor_shape = (1, c, *out_shape[:2])
-        tensor_dtype = torch.float16 if self.fp16 else torch.float32
 
         infer_stream: torch.cuda.Stream = torch.cuda.Stream(self.device)
         with torch.cuda.stream(infer_stream):
             in_tensor: torch.Tensor = torch.from_numpy(np.ascontiguousarray(in_img))
             in_tensor = in_tensor.to(device, dtype=torch.float32)
-            in_tensor = in_tensor.half() if self.fp16 else in_tensor.float()
+            in_tensor = in_tensor.to(self.dtype)
             in_tensor = flip_r_b_channels(in_tensor)
             in_tensor = to_nchw(in_tensor)
             in_tensor_shape = in_tensor.shape
             in_tensor = in_tensor.ravel()
             out_tensor: torch.Tensor = torch.empty(
                 out_tensor_shape,
-                dtype=tensor_dtype,
+                dtype=self.out_tensor_dtype,
                 device=device
             )
 
@@ -172,7 +175,7 @@ class TensorRtSession(GenericSession):
 
             context.execute_async_v3(stream_handle=infer_stream.cuda_stream)
 
-            out_tensor = torch.clamp_(out_tensor, 0, 1)
+            out_tensor = torch.clamp_(out_tensor, 0., 1.)
             out_tensor = to_hwc(out_tensor)
             out_tensor = flip_r_b_channels(out_tensor)
             out_tensor = out_tensor.float()

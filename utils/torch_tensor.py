@@ -57,13 +57,13 @@ torch_to_cp_dtype: dict[torch.dtype, cp.dtype] = {
 
 
 IdtypeToTorch: dict[Idtype, torch.dtype] = {
-    'fp32': torch.float,
+    'fp32': torch.float32,
     'fp16': torch.float16,
     'bf16': torch.bfloat16,
 }
 
 
-def to_nchw_torch(t: Tensor) -> Tensor:
+def to_nchw(t: Tensor) -> Tensor:
     shape_size = len(t.shape)
     if shape_size == 3:
         # (H, W, C) -> (1, C, H, W)
@@ -77,7 +77,7 @@ def to_nchw_torch(t: Tensor) -> Tensor:
         raise ValueError("Unsupported input tensor shape")
 
 
-def to_hwc_torch(t: Tensor) -> Tensor:
+def to_hwc(t: Tensor) -> Tensor:
     if len(t.shape) == 4:
         # (1, C, H, W) -> (H, W, C)
         return t.squeeze(0).permute(1, 2, 0)
@@ -86,7 +86,7 @@ def to_hwc_torch(t: Tensor) -> Tensor:
         raise ValueError("Unsupported output tensor shape")
 
 
-def flip_r_b_channels_torch(t: Tensor) -> Tensor:
+def flip_r_b_channels(t: Tensor) -> Tensor:
     if t.shape[2] == 3:
         # (H, W, C) RGB -> BGR
         return t.flip(2)

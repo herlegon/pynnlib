@@ -16,9 +16,9 @@ from pynnlib.nn_types import Idtype
 from pynnlib.session import GenericSession
 from pynnlib.utils.torch_tensor import (
     IdtypeToTorch,
-    to_nchw_torch,
-    flip_r_b_channels_torch,
-    to_hwc_torch
+    to_nchw,
+    flip_r_b_channels,
+    to_hwc
 )
 from ..torch_types import TorchNnModule
 if TYPE_CHECKING:
@@ -74,6 +74,7 @@ class PyTorchSession(GenericSession):
         warmup: bool = True,
     ) -> None:
         module: nn.Module = self.module
+        raise NotImplementedError("refactor with Idtype")
 
         self.device = device
         self.i_dtype = dtype
@@ -168,14 +169,14 @@ class PyTorchSession(GenericSession):
                 torch.cuda.synchronize()
 
             in_tensor: Tensor = d_tensor.to(self.torch_dtype)
-            in_tensor = flip_r_b_channels_torch(in_tensor)
-            in_tensor = to_nchw_torch(in_tensor).contiguous()
+            in_tensor = flip_r_b_channels(in_tensor)
+            in_tensor = to_nchw(in_tensor).contiguous()
 
             out_tensor: Tensor = self.module(in_tensor)
             out_tensor = torch.clamp_(out_tensor, 0, 1)
 
-            out_tensor = to_hwc_torch(out_tensor)
-            out_tensor = flip_r_b_channels_torch(out_tensor)
+            out_tensor = to_hwc(out_tensor)
+            out_tensor = flip_r_b_channels(out_tensor)
             out_tensor = out_tensor.float()
             out_img: np.ndarray = out_tensor.detach().cpu().numpy()
 
@@ -192,8 +193,8 @@ class PyTorchSession(GenericSession):
         in_tensor = torch.from_numpy(np.ascontiguousarray(in_img))
         in_tensor = in_tensor.to(self.device)
         in_tensor = in_tensor.half() if self.fp16 else in_tensor.float()
-        in_tensor = flip_r_b_channels_torch(in_tensor)
-        in_tensor = to_nchw_torch(in_tensor).contiguous()
+        in_tensor = flip_r_b_channels(in_tensor)
+        in_tensor = to_nchw(in_tensor).contiguous()
 
         if len(in_mask.shape) > 2:
             gray = cv2.cvtColor(in_mask, cv2.COLOR_BGR2GRAY)
@@ -203,13 +204,13 @@ class PyTorchSession(GenericSession):
         in_tensor_mask = in_tensor_mask.to(self.device)
         in_tensor_mask = in_tensor_mask.half() if self.fp16 else in_tensor_mask.float()
         in_tensor_mask = in_tensor_mask / 255.
-        in_tensor_mask = to_nchw_torch(in_tensor_mask).contiguous()
+        in_tensor_mask = to_nchw(in_tensor_mask).contiguous()
 
         out_tensor: Tensor = self.module(in_tensor, in_tensor_mask)
         out_tensor = torch.clamp_(out_tensor, 0, 1)
 
-        out_tensor = to_hwc_torch(out_tensor)
-        out_tensor = flip_r_b_channels_torch(out_tensor)
+        out_tensor = to_hwc(out_tensor)
+        out_tensor = flip_r_b_channels(out_tensor)
         out_tensor = out_tensor.float()
         out_img: np.ndarray = out_tensor.detach().cpu().numpy()
 

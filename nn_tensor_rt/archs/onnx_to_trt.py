@@ -2,7 +2,7 @@ from copy import deepcopy
 import numpy as np
 from pynnlib.logger import nnlogger
 from pynnlib.nn_types import Idtype
-from pynnlib.session import set_cuda_device
+from pynnlib.session import set_cupy_cuda_device
 from pynnlib.utils.p_print import *
 import tensorrt as trt
 from pynnlib.model import OnnxModel
@@ -31,9 +31,10 @@ def onnx_to_trt_engine(
         raise NotImplementedError("not yet implemented")
 
     fp16: bool = bool('fp16' in dtypes)
+    bf16: bool = bool('bf16' in dtypes)
 
     network_flags = 1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
-    set_cuda_device(device)
+    set_cupy_cuda_device(device)
     with (
         trt.Builder(TRT_LOGGER) as builder,
         builder.create_network(flags=network_flags) as network,
@@ -62,6 +63,10 @@ def onnx_to_trt_engine(
         input_name = input_tensor.name
         is_fp16 = True if trt.nptype(input_tensor.dtype) == np.float16 else fp16
         nnlogger.debug(f"is_fp16: {is_fp16}, to_fp16: {fp16}")
+
+        raise ValueError(f"input onnx tensor: input_tensor.dtype")
+
+
         # builder.max_batch_size = 1
 
         # Create a build configuration specifying how TensorRT should optimize the model
@@ -97,6 +102,10 @@ def onnx_to_trt_engine(
                 builder_config.set_flag(trt.BuilderFlag.FP16)
             else:
                 raise RuntimeError("Error: fp16 is requested but this platform does not support it")
+
+        if has_bf16 or bf16:
+            builder_config.set_flag(trt.BuilderFlag.BF16)
+
 
         # TODO create a list of profiles for each input
         if not shape_strategy.static:

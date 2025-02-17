@@ -13,7 +13,7 @@ from .nn_tensor_rt.trt_types import (
     ShapeStrategy,
     TrtEngine,
 )
-from .nn_types import NnFrameworkType
+from .nn_types import Idtype, NnFrameworkType
 if TYPE_CHECKING:
     from .architecture import NnArchitecture, SizeConstraint
     from .nn_types import NnModelDtype, NnFrameworkType
@@ -54,7 +54,7 @@ class SizeConstraint:
 class ModelExecutor:
     """Used for inference in a mp"""
     device: str
-    fp16: bool
+    dtype: Idtype
     pinned_mem: bool
     in_max_shape: tuple[int, int, int]
 

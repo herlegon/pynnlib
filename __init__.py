@@ -23,7 +23,7 @@ from .model import (
 from .nn_onnx.inference.session import OnnxSession
 from .nn_pytorch.inference.session import PyTorchSession
 from .session import (
-    set_cuda_device,
+    set_cupy_cuda_device,
     NnModelSession
 )
 
@@ -76,7 +76,7 @@ __all__ = [
 
     "is_cuda_available",
     "is_tensorrt_available",
-    "set_cuda_device",
+    "set_cupy_cuda_device",
 
     # For advanced user and dev
     "HostDeviceMemory",

@@ -1,14 +1,17 @@
 from __future__ import annotations
 import abc
 from typing import TypeVar
+from warnings import warn
+
+import torch
 from .import_libs import is_cuda_available
-from .nn_types import NnFrameworkType
+from .nn_types import Idtype, NnFrameworkType
 from .model import NnModel
 
 if is_cuda_available():
     import cupy as cp
 
-    def set_cuda_device(device: str) -> None:
+    def set_cupy_cuda_device(device: str = "cuda:0") -> None:
         if not is_cuda_available():
             print(f"[E] No cuda device found, cannot set {device}")
             return
@@ -20,7 +23,7 @@ if is_cuda_available():
         # print(f"[I] Use cuda device {device_no}")
         cp.cuda.runtime.setDevice(device_no)
 else:
-    def set_cuda_device(device: str) -> None:
+    def set_cupy_cuda_device(device: str = "cuda:0") -> None:
         pass
 
 
@@ -29,36 +32,53 @@ class GenericSession(abc.ABC):
 
     def __init__(self) -> None:
         super().__init__()
-        self._fp16: bool = False
+        # self._fp16: bool = False
         self._device: str = 'cpu'
+        self._i_dtype: Idtype = 'fp32'
         self.model: NnModel | None = None
 
 
-    def initialize(self,
+    def initialize(
+        self,
         device: str = 'cpu',
-        fp16: bool = False,
+        dtype: Idtype = 'fp32',
     ):
-        if self.model is not None:
-            self.fp16 = (
-                fp16
-                and (
-                    'fp16' in self.model.dtypes
-                    or self.model.fp16
-                )
+        warn("refactor this to remove fp16 flag")
+        # if self.model is not None:
+        #     self.fp16 = (
+        #         dtype == 'fp16'
+        #         and (
+        #             'fp16' in self.model.dtypes
+        #             or self.model.fp16
+        #         )
+        #     )
+        # else:
+        #     self.fp16 = False
+        if dtype not in self.model.dtypes:
+            raise ValueError(
+                f"{dtype} is not a valid datatype for the inference session, model arch={self.model.arch_name}"
             )
-        else:
-            self.fp16 = False
         self.device = device
 
 
     @property
-    def fp16(self) -> bool:
-        return self._fp16
+    def i_dtype(self) -> Idtype:
+        return self._i_dtype
 
 
-    @fp16.setter
-    def fp16(self, enable: bool) -> None:
-        self._fp16 = enable
+    @i_dtype.setter
+    def i_dtype(self, dtype: Idtype) -> None:
+        self._i_dtype = dtype
+
+
+    # @property
+    # def fp16(self) -> bool:
+    #     return self._fp16
+
+
+    # @fp16.setter
+    # def fp16(self, enable: bool) -> None:
+    #     self._fp16 = enable
 
 
     @property

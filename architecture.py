@@ -18,6 +18,7 @@ from .model import (
     SizeConstraint,
 )
 from .nn_types import (
+    Idtype,
     NnArchitectureType,
     NnModelDtype,
 )
@@ -59,7 +60,7 @@ class NnGenericArchitecture:
     default: bool = False
 
     # Supported datatypes
-    dtypes: set[NnModelDtype] = field(default_factory=set)
+    dtypes: set[Idtype] = field(default_factory=set)
 
     size_constraint: SizeConstraint | None = None
 
@@ -86,10 +87,20 @@ class NnGenericArchitecture:
 
 
 ConvertToOnnxFct = Callable[
-    [PytorchModel, bool, int, torch_device | str],
+    [PytorchModel, Idtype, int, bool, torch_device | str, int],
     onnx.ModelProto
 ]
-"""Convert a Pytorch model to an Onnx model. Arguments: model, to_fp16, opset, device"""
+"""Convert a Pytorch model to an Onnx model.
+
+    Arguments:
+        model: PytorchModel
+        dtype: Idtype
+        opset: int
+        static: bool = False
+        device: str = 'cpu'
+        batch: int = 1
+"""
+
 
 ConvertToTensorrtFct = Callable[
     [PytorchModel | OnnxModel, str, bool, Any, bool],
@@ -103,7 +114,7 @@ class NnPytorchArchitecture(NnGenericArchitecture):
     """Convert a model from pytorch to onnx"""
     to_onnx: ConvertToOnnxFct | None = None
     to_tensorrt: ConvertToTensorrtFct | None = None
-    # TODO add dtypes supported for conversion to tensorRT
+    # TODO add dtypes supported for conversion to tensorRT ???
     #   example: SCUNET does not support conversion to fp16
 
 

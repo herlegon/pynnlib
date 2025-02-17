@@ -9,6 +9,8 @@ import time
 import cv2
 import numpy as np
 
+from pynnlib.nn_types import Idtype
+
 # logging.config.fileConfig('config.ini')
 # logger = logging.getLogger("pynnlib")
 # logging.basicConfig(filename="logs.log", filemode="w", format="%(name)s → %(levelname)s: %(message)s")
@@ -270,7 +272,7 @@ Fallback to float if the execution provider does not support it
     if device == 'cpu' and bf16:
         sys.exit(red("The execution provider does not support bfloat16 datatype (bf16)."))
     if bf16 and 'bf16' not in model.arch.dtypes:
-        sys.exit(red("This model does not support bfloat16 datatype (bf16)."))
+        sys.exit(red("This model does not support mixed datatype (bf16)."))
 
     # Create a session
     if arguments.verbose:
@@ -279,26 +281,26 @@ Fallback to float if the execution provider does not support it
     if arguments.verbose:
         print("Initialize the session")
 
-    dtype_str: str = "fp32"
+    i_dtype: Idtype = 'fp32'
     if fp16:
-        dtype_str = "fp16"
+        i_dtype = 'fp16'
     if bf16:
-        dtype_str = "bf16"
+        i_dtype = 'bf16'
     try:
         session.initialize(
             device=device,
-            i_dtype=dtype_str,
+            i_dtype=i_dtype,
             warmup=bool(arguments.profiling)
         )
     except Exception as e:
-        session.initialize(device=device, fp16=fp16, warmup=False)
+        session.initialize(device=device, dtype=i_dtype, warmup=False)
         sys.exit(red(f"Error: {e}"))
 
     print(lightcyan(f"Inference with"), f"{model.filepath}")
     print(lightcyan(f"\tScale:"), f"{model.scale}")
     print(lightcyan(f"\tFramework:"), f"{model.fwk_type.value}")
     print(lightcyan(f"\tDevice:"), f"{device}")
-    print(lightcyan(f"\tDatatype:"), f"{dtype_str}")
+    print(lightcyan(f"\tDatatype:"), f"{i_dtype}")
 
     # Inference
     inferences: int = arguments.n if arguments.profiling else 1

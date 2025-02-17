@@ -1,6 +1,7 @@
 from __future__ import annotations
 from pprint import pprint
 from pynnlib.nn_pytorch.archs import contains_any_keys
+from pynnlib.nn_types import Idtype
 from pynnlib.utils.p_print import *
 from pynnlib.architecture import (
     InferType,
@@ -47,7 +48,7 @@ def parse(model: PytorchModel) -> None:
 
 def to_onnx_inpaint(
     model: PytorchModel,
-    fp16: bool,
+    dtype: Idtype,
     opset: int,
     static: bool = False,
     device: str = 'cpu',
@@ -57,6 +58,8 @@ def to_onnx_inpaint(
         if size is not None, use it to convert to a static shape
     """
     print(f"[V] PyTorch to ONNX")
+
+    fp16: bool = bool(dtype == 'fp16')
 
     try:
         session: PyTorchSession = model.arch.create_session(model)

@@ -1209,7 +1209,7 @@ class Generator(nn.Module):
 
 class MAT(nn.Module):
 
-    def __init__(self, fp16: bool = True):
+    def __init__(self):
         super().__init__()
         self.model = Generator(
             z_dim=512,

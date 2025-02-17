@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def to_nchw(tensor: np.ndarray) -> np.ndarray:
+def to_nchw_np(tensor: np.ndarray) -> np.ndarray:
     shape_size = len(tensor.shape)
     if shape_size == 3:
         # (H, W, C) -> (1, C, H, W)
@@ -15,7 +15,7 @@ def to_nchw(tensor: np.ndarray) -> np.ndarray:
         raise ValueError("Unsupported input tensor shape")
 
 
-def to_hwc(tensor: np.ndarray) -> np.ndarray:
+def to_hwc_np(tensor: np.ndarray) -> np.ndarray:
     if len(tensor.shape) == 4:
         # (1, C, H, W) -> (H, W, C)
         return tensor.squeeze(0).transpose(1, 2, 0)
@@ -24,7 +24,7 @@ def to_hwc(tensor: np.ndarray) -> np.ndarray:
         raise ValueError("Unsupported output tensor shape")
 
 
-def flip_r_b_channels(tensor: np.ndarray) -> np.ndarray:
+def flip_r_b_channels_np(tensor: np.ndarray) -> np.ndarray:
     if tensor.shape[2] == 3:
         # (H, W, C) RGB -> BGR
         return np.flip(tensor, 2)

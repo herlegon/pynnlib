@@ -86,5 +86,5 @@ for arch in MODEL_ARCHITECTURES:
         type=arch.name,
         parse=partial(parse, scale=arch.scale),
         create_session=create_session,
-        dtypes = ['fp32', 'fp16']
+        dtypes=['fp32', 'fp16', 'bf16']
     ))
