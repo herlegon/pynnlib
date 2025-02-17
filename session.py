@@ -4,6 +4,8 @@ from typing import TypeVar
 from warnings import warn
 
 import torch
+
+from .utils.torch_tensor import IdtypeToTorch
 from .import_libs import is_cuda_available
 from .nn_types import Idtype, NnFrameworkType
 from .model import NnModel
@@ -36,6 +38,7 @@ class GenericSession(abc.ABC):
         self._device: str = 'cpu'
         self._i_dtype: Idtype = 'fp32'
         self.model: NnModel | None = None
+        self._torch_dtype: torch.dtype = IdtypeToTorch[self._i_dtype]
 
 
     def initialize(
@@ -70,6 +73,10 @@ class GenericSession(abc.ABC):
     def i_dtype(self, dtype: Idtype) -> None:
         self._i_dtype = dtype
 
+
+    @property
+    def dtype(self) -> torch.dtype:
+        return IdtypeToTorch[self._i_dtype]
 
     # @property
     # def fp16(self) -> bool:

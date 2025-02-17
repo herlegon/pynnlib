@@ -9,7 +9,7 @@ from ..nn_types import Idtype
 
 # https://github.com/pytorch/pytorch/blob/main/torch/testing/_internal/common_utils.py
 # Dict of NumPy dtype -> torch dtype (when the correspondence exists)
-np_to_torch_dtype_dict = {
+np_dtype_to_torch = {
     np.bool_      : torch.bool,
     np.uint8      : torch.uint8,
     np.int8       : torch.int8,
@@ -28,12 +28,12 @@ if sys.platform == "win32":
     # It is returned by functions like `bitwise_not`.
     # On Windows `int` is 32-bit
     # https://docs.microsoft.com/en-us/cpp/cpp/data-type-ranges?view=msvc-160
-    np_to_torch_dtype_dict[np.intc] = torch.int
+    np_dtype_to_torch[np.intc] = torch.int
 
 # Dict of torch dtype -> NumPy dtype
-torch_to_np_dtype: dict[torch.dtype, np.dtype] = {
+torch_dtype_to_np: dict[torch.dtype, np.dtype] = {
     value: key
-    for (key, value) in np_to_torch_dtype_dict.items()
+    for (key, value) in np_dtype_to_torch.items()
 }
 # np_to_torch_dtype_dict.update({
 #     torch.bfloat16: np.float32,

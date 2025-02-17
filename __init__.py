@@ -45,11 +45,18 @@ from .framework import (
 )
 
 from .utils.torch_tensor import (
-    torch_to_np_dtype,
+    torch_dtype_to_np,
     torch_to_cp_dtype,
 )
 
 from .utils.tensor import *
+from .utils.torch_tensor import (
+    flip_r_b_channels,
+    IdtypeToTorch,
+    np_dtype_to_torch,
+    to_nchw,
+    to_hwc,
+)
 
 __all__ = [
     "nnlogger",
@@ -65,6 +72,7 @@ __all__ = [
 
     "NnModelObject",
     "Idtype",
+    "IdtypeToTorch",
 
     "NnModelSession",
     "OnnxSession",
@@ -81,7 +89,8 @@ __all__ = [
     # For advanced user and dev
     "HostDeviceMemory",
     "torch_to_cp_dtype",
-    "torch_to_np_dtype",
+    "torch_dtype_to_np",
+    "np_dtype_to_torch",
     "flip_r_b_channels",
     "to_nchw",
     "to_hwc",

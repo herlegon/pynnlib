@@ -63,7 +63,6 @@ class TensorRtSession(GenericSession):
         self.model: TrtModel = model
         self._infer_stream = None
 
-        raise ValueError("Refactor for bf16")
 
         # Use the best datatype
         self.fp16 = bool('fp16' in self.model.dtypes)
