@@ -60,7 +60,7 @@ class NnGenericArchitecture:
     default: bool = False
 
     # Supported datatypes
-    dtypes: set[Idtype] = field(default_factory=set)
+    dtypes: list[Idtype] = field(default_factory=list)
 
     size_constraint: SizeConstraint | None = None
 

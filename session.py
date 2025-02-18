@@ -36,56 +36,33 @@ class GenericSession(abc.ABC):
         super().__init__()
         # self._fp16: bool = False
         self._device: str = 'cpu'
-        self._i_dtype: Idtype = 'fp32'
         self.model: NnModel | None = None
-        self._torch_dtype: torch.dtype = IdtypeToTorch[self._i_dtype]
+        self._dtype: torch.dtype = IdtypeToTorch['fp32']
 
 
     def initialize(
         self,
         device: str = 'cpu',
-        dtype: Idtype = 'fp32',
+        dtype: Idtype | torch.dtype = 'fp32',
     ):
-        warn("refactor this to remove fp16 flag")
-        # if self.model is not None:
-        #     self.fp16 = (
-        #         dtype == 'fp16'
-        #         and (
-        #             'fp16' in self.model.dtypes
-        #             or self.model.fp16
-        #         )
-        #     )
-        # else:
-        #     self.fp16 = False
-        if dtype not in self.model.dtypes:
+        if dtype not in self.model.arch.dtypes:
             raise ValueError(
                 f"{dtype} is not a valid datatype for the inference session, model arch={self.model.arch_name}"
             )
+        self.dtype = dtype
         self.device = device
 
 
     @property
-    def i_dtype(self) -> Idtype:
-        return self._i_dtype
-
-
-    @i_dtype.setter
-    def i_dtype(self, dtype: Idtype) -> None:
-        self._i_dtype = dtype
-
-
-    @property
     def dtype(self) -> torch.dtype:
-        return IdtypeToTorch[self._i_dtype]
-
-    # @property
-    # def fp16(self) -> bool:
-    #     return self._fp16
+        return self._dtype
 
 
-    # @fp16.setter
-    # def fp16(self, enable: bool) -> None:
-    #     self._fp16 = enable
+    @dtype.setter
+    def dtype(self, dtype: Idtype | torch.dtype) -> None:
+        self._dtype = (
+            dtype if isinstance(dtype, torch.dtype) else IdtypeToTorch[dtype]
+        )
 
 
     @property

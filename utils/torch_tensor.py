@@ -62,6 +62,13 @@ IdtypeToTorch: dict[Idtype, torch.dtype] = {
     'bf16': torch.bfloat16,
 }
 
+TorchToIdtype: dict[torch.dtype, Idtype] = {
+    value: key
+    for (key, value) in IdtypeToTorch.items()
+}
+
+
+
 
 def to_nchw(t: Tensor) -> Tensor:
     shape_size = len(t.shape)

@@ -69,40 +69,26 @@ class PyTorchSession(GenericSession):
     def initialize(
         self,
         device: str,
-        fp16: bool = False,
-        dtype: Idtype = "",
+        dtype: Idtype | torch.dtype = 'fp32',
         warmup: bool = True,
     ) -> None:
         module: nn.Module = self.module
-        raise NotImplementedError("refactor with Idtype")
+        super().initialize(device=device, dtype=dtype)
 
-        self.device = device
-        self.i_dtype = dtype
-        if dtype:
-            if not is_cuda_available() or dtype not in self.model.arch.dtypes:
-                self.i_dtype = "fp32"
-                self.device: str = 'cpu'
-        else:
-            self.fp16 = fp16
-            if not is_cuda_available():
-                self.fp16 = False
-                self.device: str = 'cpu'
-            self.fp16 = self.fp16 and 'fp16' in self.model.arch.dtypes
+        if not is_cuda_available() or dtype not in self.model.arch.dtypes:
+            self.dtype = 'fp32'
+            self.device = 'cpu'
 
-        if not self.i_dtype:
-            self.i_dtype = 'fp16' if self.fp16 else 'fp32'
-
-        nnlogger.debug(f"[V] Initialize a PyTorch inference session fp16={self.i_dtype}")
+        nnlogger.debug(f"[V] Initialize a PyTorch inference session ({self.dtype})")
         torch.backends.cudnn.enabled = True
 
         module.eval()
         for param in module.parameters():
             param.requires_grad = False
 
-        nnlogger.debug(f"[V] load model to {self.device}, fp16={self.fp16}")
-        self.torch_dtype: torch.dtype = IdtypeToTorch[self.i_dtype]
+        nnlogger.debug(f"[V] load model to {self.device}, {self.dtype}")
         module.to(self.device)
-        module = module.to(dtype=self.torch_dtype)
+        module = module.to(dtype=self.dtype)
         if warmup and 'cuda' in device:
             self.warmup(3)
 
