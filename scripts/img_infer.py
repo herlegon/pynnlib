@@ -9,8 +9,6 @@ import time
 import cv2
 import numpy as np
 
-from pynnlib.nn_types import Idtype
-
 # logging.config.fileConfig('config.ini')
 # logger = logging.getLogger("pynnlib")
 # logging.basicConfig(filename="logs.log", filemode="w", format="%(name)s → %(levelname)s: %(message)s")
@@ -22,6 +20,7 @@ if not os.path.exists("pynnlib"):
         sys.path.append(root_path)
 
 from pynnlib import (
+    Idtype,
     nnlogger,
     nnlib,
     NnModel,
@@ -289,11 +288,12 @@ Fallback to float if the execution provider does not support it
     try:
         session.initialize(
             device=device,
-            i_dtype=i_dtype,
+            dtype=i_dtype,
+            create_stream=True,
             warmup=bool(arguments.profiling)
         )
     except Exception as e:
-        session.initialize(device=device, dtype=i_dtype, warmup=False)
+        session.initialize(device=device, dtype=i_dtype, create_stream=True, warmup=False)
         sys.exit(red(f"Error: {e}"))
 
     print(lightcyan(f"Inference with"), f"{model.filepath}")

@@ -2,7 +2,7 @@ import numpy as np
 from pprint import pprint
 from pynnlib import is_tensorrt_available
 from pynnlib.nn_types import Idtype
-from utils.p_print import yellow
+from utils.p_print import red, yellow
 if is_tensorrt_available():
     import tensorrt as trt
 
@@ -28,6 +28,7 @@ class TrtLogger(trt.ILogger):
     }
 
     def __init__(self, min_severity):
+        print(red("Initialize a new TrtLogger"))
         trt.ILogger.__init__(self)
         self._min_severity = min_severity
 
@@ -64,54 +65,59 @@ class TensorRtSession(GenericSession):
         self._infer_stream = None
 
 
-        # Use the best datatype
-        self.fp16 = bool('fp16' in self.model.dtypes)
-        self.in_tensor_dtype: torch.dtype = (
-            torch.float16 if 'fp16' in self.model.dtypes else torch.float32
-        )
-        self.out_tensor_dtype: torch.dtype = self.in_tensor_dtype
-        self._in_tensor_name: str = 'input'
-
     @property
     def in_tensor_name(self) -> str:
         return self._in_tensor_name
+
 
     @in_tensor_name.setter
     def in_tensor_name(self, name: str) -> None:
         self._in_tensor_name = name
 
+
+    @property
+    def infer_stream(self) -> torch.cuda.Stream:
+        return self._infer_stream
+
+
+    @infer_stream.setter
+    def infer_stream(self, stream: torch.cuda.Stream) -> None:
+        self._infer_stream = stream
+
+
+
     def initialize(self,
         device: str = 'cuda:0',
         dtype: Idtype = 'fp32',
-        **kwargs,
+        warmup: bool = False,
+        create_stream: bool = False,
     ):
-        # Device and dtype
-        self.device = device
-        self.dtype = IdtypeToTorch[dtype]
-        self.in_tensor_dtype = self.dtype
-        self.out_tensor_dtype = self.dtype
+        super().initialize(device=device, dtype=dtype)
 
         nnlogger.debug(f"[I] Use {device} to load the tensorRT Engine")
-        set_cupy_cuda_device(device)
+
+        if create_stream:
+            self.infer_stream: torch.cuda.Stream = torch.cuda.Stream(self.device)
+
+        if self.infer_stream is None:
+            raise RuntimeError("[TRT] inference stream must be defined before initialization")
 
         # Deserialize and create the context
         model_path = self.model.filepath
         print(yellow("TensorRtSession::initialize"))
         trt_runtime = trt.Runtime(get_trt_logger())
-        with open(model_path, 'rb') as f:
-            serialized_engine = f.read()
-
-        infer_stream: torch.cuda.Stream = torch.cuda.Stream(self.device)
-        with torch.cuda.stream(infer_stream):
-        # with self._infer_stream:
+        with torch.cuda.stream(self.infer_stream):
             if self.model.engine is None:
+                with open(model_path, 'rb') as f:
+                    serialized_engine = f.read()
                 self.engine = trt_runtime.deserialize_cuda_engine(serialized_engine)
             else:
+                print("reuse engine")
                 self.engine = self.model.engine
-            # Create a context (without reusing device memory)
             self.context = self.engine.create_execution_context()
 
-        self.warmup(3)
+        if warmup:
+            self.warmup(3)
 
 
     def warmup(self, count: int = 1):
@@ -126,6 +132,7 @@ class TensorRtSession(GenericSession):
             tensor_name = engine.get_tensor_name(idx)
             if engine.get_tensor_mode(tensor_name) == trt.TensorIOMode.INPUT:
                 context.set_input_shape(tensor_name, tensor_shape)
+
         nnlogger.debug(f"[V] warmup ({count}x) with a random img ({shape})")
         img = np.random.random(shape).astype(np.float32)
         for _ in range(count):
@@ -150,18 +157,16 @@ class TensorRtSession(GenericSession):
         in_tensor_shape = (1, c, *in_img.shape[:2])
         out_tensor_shape = (1, c, *out_shape[:2])
 
-        infer_stream: torch.cuda.Stream = torch.cuda.Stream(self.device)
-        with torch.cuda.stream(infer_stream):
+        with torch.cuda.stream(self.infer_stream):
             in_tensor: torch.Tensor = torch.from_numpy(np.ascontiguousarray(in_img))
-            in_tensor = in_tensor.to(device, dtype=torch.float32)
-            in_tensor = in_tensor.to(self.dtype)
+            in_tensor = in_tensor.to(device=device, dtype=self.dtype)
             in_tensor = flip_r_b_channels(in_tensor)
             in_tensor = to_nchw(in_tensor)
             in_tensor_shape = in_tensor.shape
             in_tensor = in_tensor.ravel()
             out_tensor: torch.Tensor = torch.empty(
                 out_tensor_shape,
-                dtype=self.out_tensor_dtype,
+                dtype=self.dtype,
                 device=device
             )
 
@@ -172,14 +177,15 @@ class TensorRtSession(GenericSession):
                 if engine.get_tensor_mode(tensor_name) == trt.TensorIOMode.INPUT:
                     context.set_input_shape(tensor_name, in_tensor_shape)
 
-            context.execute_async_v3(stream_handle=infer_stream.cuda_stream)
+            context.execute_async_v3(stream_handle=self.infer_stream.cuda_stream)
 
             out_tensor = torch.clamp_(out_tensor, 0., 1.)
             out_tensor = to_hwc(out_tensor)
             out_tensor = flip_r_b_channels(out_tensor)
             out_tensor = out_tensor.float()
-            infer_stream.synchronize()
+            self.infer_stream.synchronize()
             out_img: np.ndarray = out_tensor.detach().cpu().numpy()
+
         return out_img
 
 

@@ -154,7 +154,7 @@ class PyTorchSession(GenericSession):
                 )
                 torch.cuda.synchronize()
 
-            in_tensor: Tensor = d_tensor.to(self.torch_dtype)
+            in_tensor: Tensor = d_tensor.to(self.dtype)
             in_tensor = flip_r_b_channels(in_tensor)
             in_tensor = to_nchw(in_tensor).contiguous()
 

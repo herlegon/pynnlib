@@ -273,9 +273,10 @@ class NnLib:
         onnx_model.opset = opset
 
         # TODO: clean this
-        if dtype == 'fp16' and dtype in model.arch.dtypes:
+        onnx_dtype = model.dtypes[0]
+        if onnx_dtype == 'fp16' and onnx_dtype in model.arch.dtypes:
             onnx_model.dtypes = set(['fp16'])
-        elif dtype == 'bf16' and dtype in model.arch.dtypes:
+        elif onnx_dtype == 'bf16' and onnx_dtype in model.arch.dtypes:
             onnx_model.dtypes = set(['bf16'])
         else:
             onnx_model.dtypes = set(['fp32'])

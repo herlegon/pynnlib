@@ -20,9 +20,10 @@ def _to_onnx(
     batch: int = 1,
 ) -> onnx.ModelProto | None:
     # Whatever the dtype, convert to fp32 because others are not supported
+    model.dtypes = ('fp32',)
     return to_onnx(
         model=model,
-        dtype=dtype,
+        dtype='fp32',
         opset=opset,
         static=static,
         device=device,

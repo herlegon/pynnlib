@@ -33,14 +33,14 @@ def to_onnx(
         raise NotImplementedError(red(f"{model.arch.name} is not supported"))
         return None
 
+    if dtype == 'bf16':
+        raise NotImplementedError("Conversion to bf16 is not supported yet.")
+
     fp16: bool = bool(dtype == 'fp16')
     if not is_cuda_available():
         print("[W] cuda not available, fallback to cpu")
         device = 'cpu'
         fp16 = False
-
-    if dtype == 'bf16':
-        raise NotImplementedError("Conversion to bf16 is not supported yet.")
 
     # https://learn.microsoft.com/en-us/windows/ai/windows-ml/tutorials/pytorch-analysis-convert-model
     print(f"[V] PyTorch to ONNX: initialize a session, device={device}, fp16={fp16}, opset={opset}")
@@ -86,12 +86,6 @@ def to_onnx(
         )
         bytes_io.seek(0)
         model_proto = onnx.load(bytes_io)
-
-    # Convert float to float16 ?
-    # Not really intersting
-    # from onnxconverter_common import float16
-    # if fp16 and device != 'cpu':
-    #     model_proto = float16.convert_float_to_float16(model_proto)
 
     try:
         onnx.checker.check_model(model_proto)

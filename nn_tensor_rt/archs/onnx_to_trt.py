@@ -27,11 +27,9 @@ def onnx_to_trt_engine(
 
     """
     print("[V] Start converting to TRT")
-    if 'bf16' in dtypes:
-        raise NotImplementedError("not yet implemented")
 
-    fp16: bool = bool('fp16' in dtypes)
-    bf16: bool = bool('bf16' in dtypes)
+    has_fp16: bool = bool('fp16' in dtypes)
+    has_bf16: bool = bool('bf16' in dtypes)
 
     network_flags = 1 << int(trt.NetworkDefinitionCreationFlag.EXPLICIT_BATCH)
     set_cupy_cuda_device(device)
@@ -61,11 +59,8 @@ def onnx_to_trt_engine(
         if input_tensor is None:
             raise ValueError("Missing input tensor in model")
         input_name = input_tensor.name
-        is_fp16 = True if trt.nptype(input_tensor.dtype) == np.float16 else fp16
-        nnlogger.debug(f"is_fp16: {is_fp16}, to_fp16: {fp16}")
-
-        raise ValueError(f"input onnx tensor: input_tensor.dtype")
-
+        is_fp16 = True if trt.nptype(input_tensor.dtype) == np.float16 else has_fp16
+        nnlogger.debug(f"is_fp16: {is_fp16}, to_fp16: {has_fp16}")
 
         # builder.max_batch_size = 1
 
@@ -97,13 +92,13 @@ def onnx_to_trt_engine(
         # optimization level: default=3
         # builder.builder_optimization_level = 5
 
-        if is_fp16 or fp16:
+        if is_fp16 or has_fp16:
             if builder.platform_has_fast_fp16:
                 builder_config.set_flag(trt.BuilderFlag.FP16)
             else:
                 raise RuntimeError("Error: fp16 is requested but this platform does not support it")
 
-        if has_bf16 or bf16:
+        if has_bf16:
             builder_config.set_flag(trt.BuilderFlag.BF16)
 
 
