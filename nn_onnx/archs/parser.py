@@ -1,5 +1,6 @@
 from copy import deepcopy
 import math
+from warnings import warn
 import onnx
 import onnxruntime as ort
 
@@ -161,13 +162,18 @@ def get_scale_from_shape_inference(
     model_proto_tmp: onnx.ModelProto = deepcopy(model_proto)
 
     # TODO: change this hardcoded size by the min size?
-    in_shape, out_shape = get_shapes_from_shape_inference(
-        model_proto=model_proto_tmp,
-        shape_order=in_shape_order,
-        dummy_size=64,
-        in_nc=in_nc
-    )
-    nnlogger.debug(f"[V] shape inference returned: in={in_shape}, out={out_shape}")
+    try:
+        in_shape, out_shape = get_shapes_from_shape_inference(
+            model_proto=model_proto_tmp,
+            shape_order=in_shape_order,
+            dummy_size=64,
+            in_nc=in_nc
+        )
+        nnlogger.debug(f"[V] shape inference returned: in={in_shape}, out={out_shape}")
+    except:
+        warn(f"[V] failed to detect scale, default to 2")
+        return 2, 2, 3
+
 
     # If shape inference "failed", create an onnx session
     img_shape = guess_shape(out_shape)[1:]
