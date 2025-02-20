@@ -65,13 +65,6 @@ IdtypeToTorch: dict[Idtype, torch.dtype] = {
     'bf16': torch.bfloat16,
 }
 
-TorchToIdtype: dict[torch.dtype, Idtype] = {
-    value: key
-    for (key, value) in IdtypeToTorch.items()
-}
-
-
-
 
 def to_nchw(t: Tensor) -> Tensor:
     shape_size = len(t.shape)
@@ -115,3 +108,65 @@ def flip_r_b_channels(t: Tensor) -> Tensor:
 
     return t
 
+
+def img_to_tensor(
+    d_img: Tensor,
+    dtype: torch.dtype,
+    flip_r_b: bool = False,
+) -> Tensor:
+    """ Create a 4D tensor from a 3D image (tensor type), reshaped and normalized
+    """
+    d_tensor: Tensor = d_img
+    img_dtype: torch.dtype = d_img.dtype
+    if flip_r_b:
+        d_tensor = flip_r_b_channels(d_tensor)
+    d_tensor = to_nchw(d_tensor)
+
+    divisor: float = (
+        float(torch.iinfo(img_dtype).max)
+        if dtype != img_dtype
+        else 1.
+    )
+
+    if divisor != 1.:
+        d_tensor = d_tensor.to(dtype=torch.float32) / divisor
+
+    d_tensor = d_tensor.to(dtype)
+    return d_tensor.contiguous()
+
+
+
+def tensor_to_img(
+    tensor: Tensor,
+    dtype: np.dtype,
+    flip_r_b: bool = False,
+) -> Tensor:
+
+    d_img: Tensor = to_hwc(tensor)
+    if flip_r_b:
+        d_img = flip_r_b_channels(d_img)
+
+    d_img = torch.clamp(d_img, 0., 1.0)
+
+    multiplier: float = 1.
+    tensor_dtype: torch.dtype = tensor.dtype
+    if tensor_dtype != dtype:
+        num = (
+            float(np.iinfo(dtype).max)
+            if tensor_dtype in (torch.float32, torch.float16, torch.bfloat16)
+            else 1.
+        )
+        denum = (
+            float(np.iinfo(tensor_dtype).max)
+            if dtype == np.float32
+            else 1.
+        )
+        multiplier: float = num / denum
+
+    if multiplier != 1.:
+        d_img = d_img.to(dtype=torch.float32, copy=False)
+        d_img = d_img * multiplier
+
+    d_img = d_img.to(dtype=np_dtype_to_torch[dtype])
+
+    return d_img
